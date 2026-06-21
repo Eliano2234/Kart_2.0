@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SIMBERTOUT TRACKMASTER PRO</title>
+    <style>
+        :root {
+            --bg-dark: #080810;
+            --panel-bg: rgba(20, 20, 35, 0.7);
+            --border-glow: rgba(255, 255, 255, 0.08);
+            --neon-green: #00ff66;
+            --neon-red: #ff003c;
+            --neon-orange: #ffaa00;
+            --text-main: #ffffff;
+            --text-muted: #6c757d;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        
+        body { 
+            background: radial-gradient(circle at center, #121224 0%, var(--bg-dark) 100%); 
+            color: var(--text-main); 
+            font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            overflow: hidden; 
+            width: 100vw; 
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* BARRE DE STATUT SUPÉRIEURE */
+        .top-status-bar {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-glow);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            height: 45px;
+        }
+        .status-online { color: var(--neon-green); text-shadow: 0 0 8px rgba(0,255,102,0.4); }
+
+        /* SÉLECTEUR DE MODE (ONGLETS STYLE RACING) */
+        .mode-selector {
+            display: flex;
+            background: rgba(0,0,0,0.2);
+            padding: 5px;
+            gap: 5px;
+            height: 50px;
+        }
+        .mode-tab {
+            flex: 1;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .mode-tab.active {
+            background: var(--panel-bg);
+            color: var(--text-main);
+            border-color: var(--border-glow);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        #tab-dyno.active { border-bottom: 3px solid var(--neon-orange); color: var(--neon-orange); }
+        #tab-route.active { border-bottom: 3px solid var(--neon-green); color: var(--neon-green); }
+        #tab-race.active { border-bottom: 3px solid var(--neon-red); color: var(--neon-red); }
+
+        /* CONTENEUR PRINCIPAL DES ÉCRANS */
+        .screen-container {
+            flex-grow: 1;
+            position: relative;
+            padding: 15px;
+        }
+        .screen {
+            display: none;
+            position: absolute;
+            top: 15px; left: 15px; right: 15px; bottom: 15px;
+            grid-gap: 15px;
+        }
+        .screen.active { display: grid; }
+
+        /* COMPOSANTS EN CLASSE VITRÉE (GLASSMORPHISM) */
+        .card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .card-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            position: absolute;
+            top: 12px; left: 15px;
+        }
+        .card-value {
+            font-size: 3rem;
+            font-weight: 900;
+            font-family: monospace, sans-serif;
+            margin-top: 10px;
+        }
+        .unit { font-size: 1rem; color: var(--text-muted); font-weight: 500; margin-left: 4px; }
+
+        /* --- 1. CONFIGURATION MODE BANCO (DYNO) --- */
+        #screen-dyno { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+        .config-bar {
+            display: flex;
+            gap: 15px;
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+        .config-bar label { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--neon-orange); }
+        .config-bar input {
+            background: #000;
+            border: 1px solid var(--border-glow);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            width: 80px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1rem;
+        }
+        .dyno-results { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; height: 100%; }
+
+        /* --- 2. CONFIGURATION MODE ROUTE --- */
+        #screen-route { grid-template-columns: 1fr; grid-template-rows: 1.5fr 1fr 1fr; }
+        .big-speed { font-size: 6.5rem; color: var(--neon-green); text-shadow: 0 0 30px rgba(0,255,102,0.2); }
+
+        /* --- 3. CONFIGURATION MODE RACE --- */
+        #screen-race { grid-template-columns: 1fr 1fr; grid-template-rows: 1.2fr 1fr 1fr 1fr; }
+        .full-width { grid-column: span 2; }
+        .race-chrono { font-size: 4rem; color: var(--neon-red); text-shadow: 0 0 25px rgba(255,0,60,0.3); }
+
+        /* SYSTEM DIALOG PERMISSION */
+        #ios-lockout {
+            position: fixed; top:0; left:0; width:100vw; height:100vh;
+            background: #000; z-index: 9999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; padding: 30px; text-align: center;
+        }
+        #ios-lockout button {
+            background: var(--neon-green); color: black; font-weight: 900; padding: 15px 40px;
+            border: none; border-radius: 30px; margin-top: 25px; font-size: 1.1rem; text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ios-lockout">
+        <h2>🚀 SIMBERTOUT TELEMETRY</h2>
+        <p style="color: var(--text-muted); margin-top: 10px; font-size: 0.9rem;">Cliquez ci-dessous pour synchroniser les capteurs physiques internes de l'appareil.</p>
+        <button onclick="forceStartSensors()">DÉMARRAGE IMMÉDIAT</button>
+    </div>
+
+    <div class="top-status-bar">
+        <span id="top-clock">00:00:00</span>
+        <span id="top-weather">METEO : SYNC...</span>
+        <span id="top-bat" class="status-online">BAT. TEL : --%</span>
+    </div>
+
+    <div class="mode-selector">
+        <button class="mode-tab active" id="tab-route" onclick="switchMode('route')">🛣️ Mode Route</button>
+        <button class="mode-tab" id="tab-dyno" onclick="switchMode('dyno')">📊 Banc Puissance</button>
+        <button class="mode-tab" id="tab-race" onclick="switchMode('race')">🏁 Mode Piste</button>
+    </div>
+
+    <div class="screen-container">
+
+        <div class="screen active" id="screen-route">
+            <div class="card">
+                <div class="card-label">Vitesse Actuelle</div>
+                <div class="card-value big-speed" id="route-speed">0<span class="unit" style="font-size: 1.5rem;">km/h</span></div>
+            </div>
+            <div class="card" style="flex-direction: row; justify-content: space-around;">
+                <div>
+                    <div class="card-label" style="position:static; margin-bottom: 5px;">Orientation</div>
+                    <div class="card-value" id="route-head" style="font-size: 1.8rem; margin:0;">--°</div>
+                </div>
+                <div style="border-left: 1px solid var(--border-glow); padding-left: 40px;">
+                    <div class="card-label" style="position:static; margin-bottom: 5px;">Altitude</div>
+                    <div class="card-value" id="route-alt" style="font-size: 1.8rem; margin:0;">--<span class="unit">m</span></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-label">Force G Latérale</div>
+                <div class="card-value" id="route-g" style="font-size: 2rem;">0.00<span class="unit">G</span></div>
+            </div>
+        </div>
+
+        <div class="screen" id="screen-dyno">
+            <div class="config-bar">
+                <label for="weightInput">Poids Total Équipé :</label>
+                <input type="number" id="weightInput" value="165" onchange="saveWeight()">
+                <span class="unit" style="margin:0;">kg</span>
+            </div>
+            <div class="dyno-results">
+                <div class="card" style="grid-column: span 2; background: linear-gradient(180deg, rgba(255,170,0,0.05) 0%, var(--panel-bg) 100%);">
+                    <div class="card-label" style="color: var(--neon-orange);">Puissance Instantanée</div>
+                    <div class="card-value" id="dyno-power" style="font-size: 4.5rem; color: var(--neon-orange);">0.0<span class="unit" style="color:var(--neon-orange)">ch</span></div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Puissance Max Atteinte</div>
+                    <div class="card-value" id="dyno-max-power" style="font-size: 2rem; color: #fff;">0.0<span class="unit">ch</span></div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Accélération pure</div>
+                    <div class="card-value" id="dyno-accel" style="font-size: 2rem;">0.00<span class="unit">m/s²</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="screen" id="screen-race">
+            <div class="card full-width">
+                <div class="card-label">Chronomètre live</div>
+                <div class="card-value race-chrono" id="race-timer">00:00.00</div>
+            </div>
+            <div class="card">
+                <div class="card-label" style="color: var(--neon-green)">Vitesse</div>
+                <div class="card-value" id="race-speed" style="font-size: 2.2rem; color: var(--neon-green)">0</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Dernier Tour</div>
+                <div class="card-value" id="race-lastlap" style="font-size: 1.8rem;">--:--.--</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Force G Max</div>
+                <div class="card-value" id="race-gmax" style="font-size: 1.8rem;">0.00<span class="unit">G</span></div>
+            </div>
+            <div class="card">
+                <div class="card-label">Précision GPS</div>
+                <div class="card-value" id="race-gps-acc" style="font-size: 1.5rem; color: var(--neon-orange);">SYNCHRO...</div>
+            </div>
+            <div class="card full-width" style="background: rgba(0,0,0,0.4); border-style: dashed; cursor:pointer;" onclick="triggerVirtualGate()">
+                <div class="card-value" id="gate-btn-text" style="font-size: 1.1rem; text-transform:uppercase; letter-spacing:1px; margin:0; color:var(--neon-orange)">📍 Définir Ligne Top Chrono Ici</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // GLOBALS & CAPTEURS
+        let vehicleWeight = parseFloat(localStorage.getItem('simbertout_weight')) || 165;
+        document.getElementById('weightInput').value = vehicleWeight;
+
+        let currentSpeedMS = 0;
+        let lastSpeedMS = 0;
+        let lastSpeedTime = Date.now();
+        let maxPowerRealized = 0;
+        let maxGForceRecorded = 0;
+
+        // Variables Chronométrage Virtuel (Ligne de départ)
+        let virtualGateCoords = null;
+        let previousCoords = { lat: null, lon: null };
+        let sessionStartTime = 0;
+        let lapStartTime = 0;
+        let chronoInterval = null;
+
+        // Système d'activation automatique intelligent
+        window.addEventListener('DOMContentLoaded', () => {
+            // Test immédiat si les permissions d'orientation nécessitent une action (iOS spécifique)
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                // Reste sur l'écran d'accueil noir pour forcer le clic utilisateur exigé par Apple
+            } else {
+                // Sur Android, on bypass direct l'écran noir de verrouillage
+                document.getElementById('ios-lockout').style.display = 'none';
+                startHardwareEngines();
+            }
+        });
+
+        function forceStartSensors() {
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            document.getElementById('ios-lockout').style.display = 'none';
+                            startHardwareEngines();
+                        } else {
+                            alert("Capteurs refusés. L'application ne fonctionnera pas correctement.");
+                        }
+                    }).catch(console.error);
+            } else {
+                document.getElementById('ios-lockout').style.display = 'none';
+                startHardwareEngines();
+            }
+        }
+
+        // DÉMARRAGE AUTOMATIQUE DE TOUS LES SYSTÈMES DU TÉLÉPHONE
+        function startHardwareEngines() {
+            initSystemClock();
+            initBatteryMonitor();
+            initCoreGPS();
+            initMotionSensors();
+        }
+
+        // 1. HORLOGE
+        function initSystemClock() {
+            setInterval(() => {
+                const d = new Date();
+                document.getElementById('top-clock').innerText = d.toTimeString().split(' ')[0];
+            }, 1000);
+        }
+
+        // 2. BATTERIE
+        function initBatteryMonitor() {
+            if (navigator.getBattery) {
+                navigator.getBattery().then(b => {
+                    const r = () => document.getElementById('top-bat').innerText = `BAT. TEL : ${Math.round(b.level * 100)}%`;
+                    r(); b.onlevelchange = r;
+                });
+            }
+        }
+
+        // 3. TRAITEMENT GPS CENTRAL (100% Automatique)
+        function initCoreGPS() {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition((position) => {
+                    let lat = position.coords.latitude;
+                    let lon = position.coords.longitude;
+                    let speedKMH = position.coords.speed ? (position.coords.speed * 3.6) : 0;
+                    currentSpeedMS = position.coords.speed || 0;
+                    let altitude = position.coords.altitude ? Math.round(position.coords.altitude) : "--";
+                    let accuracy = position.coords.accuracy ? Math.round(position.coords.accuracy) : 0;
+
+                    // Update UI Route
+                    document.getElementById('route-speed').innerHTML = `${Math.round(speedKMH)}<span class="unit">km/h</span>`;
+                    document.getElementById('route-alt').innerText = `${altitude}m`;
+
+                    // Update UI Race
+                    document.getElementById('race-speed').innerText = Math.round(speedKMH);
+                    document.getElementById('race-gps-acc').innerText = `± ${accuracy}m`;
+                    document.getElementById('race-gps-acc').style.color = accuracy < 10 ? 'var(--neon-green)' : 'var(--neon-orange)';
+
+                    // --- MOTEUR ALGORITHMIQUE BANC DE PUISSANCE VIRTUELE ---
+                    let now = Date.now();
+                    let dt = (now - lastSpeedTime) / 1000;
+                    if (dt > 0.2) {
+                        let acceleration = (currentSpeedMS - lastSpeedMS) / dt; // m/s²
+                        if (acceleration < 0) acceleration = 0;
+
+                        let force = vehicleWeight * acceleration;
+                        let powerWatts = force * currentSpeedMS;
+                        let powerCH = powerWatts / 735.5;
+
+                        document.getElementById('dyno-accel').innerHTML = `${acceleration.toFixed(2)}<span class="unit">m/s²</span>`;
+                        document.getElementById('dyno-power').innerHTML = `${powerCH.toFixed(1)}<span class="unit">ch</span>`;
+
+                        if (powerCH > maxPowerRealized) {
+                            maxPowerRealized = powerCH;
+                            document.getElementById('dyno-max-power').innerHTML = `${maxPowerRealized.toFixed(1)}<span class="unit">ch</span>`;
+                        }
+
+                        lastSpeedMS = currentSpeedMS;
+                        lastSpeedTime = now;
+                    }
+
+                    // --- CHRONOMÉTRAGE VIRTUEL DE LA PISTE ---
+                    if (virtualGateCoords && previousCoords.lat !== null) {
+                        let crossed = checkVirtualGateCrossing(previousCoords.lat, previousCoords.lon, lat, lon, virtualGateCoords.lat, virtualGateCoords.lon);
+                        if (crossed) {
+                            triggerLapSplit();
+                        }
+                    }
+
+                    previousCoords.lat = lat;
+                    previousCoords.lon = lon;
+
+                    // Charger la météo une fois localisé
+                    if (document.getElementById('top-weather').innerText.includes("SYNC")) {
+                        fetchLiveWeatherAPI(lat, lon);
+                    }
+
+                }, () => {}, { enableHighAccuracy: true, maximumAge: 0 });
+            }
+        }
+
+        // 4. ACCÉLÉROMÈTRE ET CAP MAGNETIQUE
+        function initMotionSensors() {
+            // Boussole automatique
+            window.addEventListener('deviceorientation', (e) => {
+                let heading = e.alpha;
+                if(heading !== null) {
+                    document.getElementById('route-head').innerText = `${Math.round(heading)}°`;
+                }
+            }, true);
+
+            // Capteur de Force G
+            window.addEventListener('devicemotion', (event) => {
+                let ax = event.accelerationIncludingGravity.x || 0;
+                let ay = event.accelerationIncludingGravity.y || 0;
+                let az = event.accelerationIncludingGravity.z || 0;
+
+                let totalG = Math.sqrt(ax*ax + ay*ay + az*az) / 9.81;
+                let netG = Math.abs(totalG - 1); // Soustraction pesante terrestre
+
+                document.getElementById('route-g').innerHTML = `${netG.toFixed(2)}<span class="unit">G</span>`;
+                
+                if (netG > maxGForceRecorded) {
+                    maxGForceRecorded = netG;
+                    document.getElementById('race-gmax').innerHTML = `${maxGForceRecorded.toFixed(2)}<span class="unit">G</span>`;
+                }
+            });
+        }
+
+        // 5. API MÉTÉO AUTOMATIQUE VIA POSITION SANS CLÉ
+        async function fetchLiveWeatherAPI(lat, lon) {
+            try {
+                let res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,surface_pressure`);
+                let data = await res.json();
+                document.getElementById('top-weather').innerText = `METEO : ${data.current.temperature_2m}°C | ${Math.round(data.current.surface_pressure)} hPa`;
+            } catch(e) {
+                document.getElementById('top-weather').innerText = "METEO : HORS LIGNE";
+            }
+        }
+
+        // --- GESTION DU CHRONOMÉTRAGE DE PISTE ---
+        function triggerVirtualGate() {
+            if (previousCoords.lat !== null) {
+                virtualGateCoords = { lat: previousCoords.lat, lon: previousCoords.lon };
+                document.getElementById('gate-btn-text').innerText = "🔒 LIGNE ENREGISTRÉE (CHRONO PRÊT)";
+                document.getElementById('gate-btn-text').style.color = "var(--neon-green)";
+                
+                // Init chronomètre global
+                lapStartTime = Date.now();
+                if(chronoInterval) clearInterval(chronoInterval);
+                chronoInterval = setInterval(updateChronoDisplay, 30);
+            } else {
+                alert("Attente d'un signal GPS valide pour marquer la ligne.");
+            }
+        }
+
+        function updateChronoDisplay() {
+            let elapsed = Date.now() - lapStartTime;
+            document.getElementById('race-timer').innerText = formatTime(elapsed);
+        }
+
+        function triggerLapSplit() {
+            let now = Date.now();
+            let lapTime = now - lapStartTime;
+            lapStartTime = now; // relance le tour
+            document.getElementById('race-lastlap').innerText = formatTime(lapTime);
+        }
+
+        // Vérification mathématique simplifiée de proximité de la ligne (Seuil rayon d'action de 15 mètres)
+        function checkVirtualGateCrossing(lat1, lon1, lat2, lon2, gateLat, gateLon) {
+            let d = Math.sqrt(Math.pow(lat2 - gateLat, 2) + Math.pow(lon2 - gateLon, 2));
+            return d < 0.00015; // Équivaut environ à un rayon de passage de ~15m autour du point cible
+        }
+
+        // UTILS
+        function switchMode(modeName) {
+            document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            
+            document.getElementById(`tab-${modeName}`).classList.add('active');
+            document.getElementById(`screen-${modeName}`).classList.add('active');
+        }
+
+        function saveWeight() {
+            let val = parseFloat(document.getElementById('weightInput').value);
+            if(val > 0) {
+                vehicleWeight = val;
+                localStorage.setItem('simbertout_weight', val);
+            }
+        }
+
+        function formatTime(ms) {
+            let min = Math.floor(ms / 60000).toString().padStart(2, '0');
+            let sec = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
+            let msec = Math.floor((ms % 1000) / 10).toString().padStart(2, '0');
+            return `${min}:${sec}.${msec}`;
+        }
+    </script>
+</body>
+</html>
