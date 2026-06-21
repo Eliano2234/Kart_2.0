@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SIMBERTOUT TRACKMASTER PRO</title>
+    <title>SIMBERTOUT TELEMETRY PRO EVOLUTION</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-dark: #06060c;
-            --panel-bg: rgba(20, 20, 35, 0.85);
-            --border-glow: rgba(255, 255, 255, 0.08);
+            --bg-dark: #040408;
+            --panel-bg: rgba(16, 16, 28, 0.88);
+            --border-glow: rgba(255, 255, 255, 0.06);
             --neon-green: #00ff66;
             --neon-red: #ff003c;
             --neon-orange: #ffaa00;
+            --neon-blue: #00d2ff;
             --text-main: #ffffff;
             --text-muted: #6c757d;
         }
@@ -19,7 +21,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         
         body { 
-            background: radial-gradient(circle at center, #101020 0%, var(--bg-dark) 100%); 
+            background: radial-gradient(circle at center, #0d0d1a 0%, var(--bg-dark) 100%); 
             color: var(--text-main); 
             font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
             overflow: hidden; 
@@ -29,309 +31,285 @@
             flex-direction: column;
             padding-left: env(safe-area-inset-left);
             padding-right: env(safe-area-inset-right);
-            padding-top: 0;
             padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* BARRE DE STATUT SUPÉRIEURE */
+        /* BARRE STATUT */
         .top-status-bar {
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-glow);
-            padding: 0 20px;
+            padding: 0 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 600;
             color: var(--text-muted);
-            height: 30px;
+            height: 28px;
         }
-        .status-online { color: var(--neon-green); text-shadow: 0 0 8px rgba(0,255,102,0.4); }
-        #wake-status { font-weight: bold; }
+        .status-online { color: var(--neon-green); }
 
-        /* SÉLECTEUR DE MODE EXTENSIBLE HORIZONTAL */
-        .mode-selector {
-            display: flex;
-            background: rgba(0,0,0,0.4);
-            padding: 2px;
-            gap: 2px;
-            height: 35px;
-        }
+        /* NAV MODES */
+        .mode-selector { display: flex; background: rgba(0,0,0,0.6); height: 32px; }
         .mode-tab {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-weight: 800;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 1px;
-            border-radius: 4px;
-            cursor: pointer;
+            flex: 1; background: transparent; border: none; color: var(--text-muted);
+            font-weight: 800; text-transform: uppercase; font-size: 0.72rem; cursor: pointer;
         }
-        .mode-tab.active {
-            background: var(--panel-bg);
-            color: var(--text-main);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-        }
+        .mode-tab.active { background: var(--panel-bg); color: var(--text-main); }
         #tab-route.active { border-bottom: 2px solid var(--neon-green); color: var(--neon-green); }
         #tab-dyno.active { border-bottom: 2px solid var(--neon-orange); color: var(--neon-orange); }
         #tab-race.active { border-bottom: 2px solid var(--neon-red); color: var(--neon-red); }
 
-        /* CONTENEUR PRINCIPAL DES ÉCRANS */
-        .screen-container {
-            flex-grow: 1;
-            position: relative;
-            padding: 8px;
-            height: calc(100vh - 65px);
-        }
-        .screen {
-            display: none;
-            position: absolute;
-            top: 8px; left: 8px; right: 8px; bottom: 8px;
-            grid-gap: 8px;
-        }
+        /* CONTAINER GRIDS */
+        .screen-container { flex-grow: 1; position: relative; padding: 5px; height: calc(100vh - 92px); }
+        .screen { display: none; position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px; grid-gap: 5px; }
         .screen.active { display: grid; }
 
-        /* LOOK DES CARTES COUCHÉES */
         .card {
-            background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glow);
-            border-radius: 8px;
-            padding: 8px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: relative;
+            background: var(--panel-bg); backdrop-filter: blur(20px); border: 1px solid var(--border-glow);
+            border-radius: 6px; padding: 6px; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; position: relative;
         }
         .card-label {
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            font-weight: 700;
-            letter-spacing: 1px;
-            position: absolute;
-            top: 6px; left: 10px;
+            font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase;
+            font-weight: 700; letter-spacing: 0.5px; position: absolute; top: 4px; left: 6px;
         }
-        .card-value {
-            font-size: 2rem;
-            font-weight: 900;
-            font-family: monospace, sans-serif;
-        }
-        .unit { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; margin-left: 2px; }
+        .card-value { font-size: 1.8rem; font-weight: 900; font-family: monospace, sans-serif; }
+        .unit { font-size: 0.7rem; color: var(--text-muted); font-weight: 500; margin-left: 1px; }
+        .rpm-text { color: var(--neon-blue); text-shadow: 0 0 10px rgba(0,210,255,0.15); }
 
-        /* --- MODE ROUTE : OPTIMISÉ HORIZONTAL --- */
+        /* SCENE COUCHEE ROUTE */
         #screen-route { grid-template-columns: 1.4fr 1fr 1fr; }
-        .big-speed { font-size: 4.5rem; color: var(--neon-green); text-shadow: 0 0 20px rgba(0,255,102,0.15); margin-top: 10px;}
+        .giant-speed { font-size: 4.2rem; color: var(--neon-green); }
 
-        /* --- MODE BANC DE PUISSANCE --- */
-        #screen-dyno { grid-template-columns: 1.4fr 1fr; grid-template-rows: auto 1fr; }
-        .config-bar {
-            grid-column: span 2;
-            display: flex;
-            gap: 8px;
-            background: rgba(0,0,0,0.4);
-            padding: 5px;
-            border-radius: 6px;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
+        /* SCENE COUCHEE DYNO */
+        #screen-dyno { grid-template-columns: 1fr 1.2fr; }
+        .action-btn {
+            background: #111; border: 1px solid rgba(255,170,0,0.3); color: var(--neon-orange);
+            font-weight: 800; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;
         }
-        .config-bar input {
+        .action-btn.recording { background: var(--neon-red); color: white; border-color: transparent; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        /* SCENE COUCHEE PISTE */
+        #screen-race { grid-template-columns: 1.2fr 1fr 1fr; }
+        .chrono-text { font-size: 2.8rem; color: var(--neon-red); }
+
+        /* FENÊTRES MODALES PLEIN ÉCRAN (FIN DE SESSION ET RAPPORTS) */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(5,5,10,0.95); z-index: 10000; padding: 15px;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .modal-box {
+            background: #10101c; border: 1px solid var(--border-glow); border-radius: 8px;
+            width: 90%; height: 85%; padding: 15px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-glow); padding-bottom: 5px; }
+        .modal-body { flex-grow: 1; overflow-y: auto; display: flex; gap: 15px; }
+        
+        /* LISTES DE DONNÉES */
+        .data-list { flex: 1; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; overflow-y: auto; font-family: monospace; font-size: 0.8rem; }
+        .data-row { padding: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; justify-content: space-between; }
+        .best-lap-row { color: var(--neon-green); font-weight: bold; background: rgba(0,255,102,0.05); }
+
+        /* GRAPHIQUE */
+        .chart-container { flex: 2; position: relative; background: rgba(0,0,0,0.2); border-radius: 4px; padding: 5px; }
+
+        .btn-group { display: flex; gap: 10px; justify-content: flex-end; }
+        .modal-btn { padding: 6px 15px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; cursor: pointer; border: none; }
+        .btn-green { background: var(--neon-green); color: black; }
+        .btn-close { background: #333; color: white; }
+
+        /* CONFIG BAR BOTTOM */
+        .universal-config-bar {
+            background: rgba(0, 0, 0, 0.8); border-top: 1px solid var(--border-glow);
+            padding: 0 10px; display: flex; justify-content: space-around; align-items: center;
+            font-size: 0.65rem; font-weight: 700; color: var(--text-muted); height: 32px;
+        }
+        .config-group { display: flex; align-items: center; gap: 3px; }
+        .universal-config-bar input {
             background: #000; border: 1px solid var(--border-glow); color: #fff;
-            padding: 2px 6px; border-radius: 4px; width: 55px; text-align: center; font-weight: bold; font-size: 0.85rem;
+            padding: 1px 4px; border-radius: 3px; width: 38px; text-align: center; font-weight: bold; font-size: 0.72rem;
         }
 
-        /* --- MODE PISTE (RACE) --- */
-        #screen-race { grid-template-columns: 1.4fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
-        .full-height { grid-row: span 2; }
-        .race-chrono { font-size: 3.2rem; color: var(--neon-red); text-shadow: 0 0 20px rgba(255,0,60,0.2); margin-top: 10px; }
-        .gate-btn { 
-            margin-top: 8px; padding: 4px 10px; border: 1px dashed var(--neon-orange); 
-            border-radius: 4px; cursor: pointer; background: rgba(0,0,0,0.2);
-        }
-
-        /* SÉCURITÉ ROTATION PORTRAIT (Force l'utilisateur à tourner l'écran) */
+        /* VERROUILLAGES ACCÈS */
         #portrait-warning {
             display: none; position: fixed; top:0; left:0; width:100vw; height:100vh;
-            background: #080810; z-index: 99999; flex-direction: column;
-            justify-content: center; align-items: center; padding: 20px; text-align: center;
+            background: #040408; z-index: 99999; flex-direction: column; justify-content: center; align-items: center;
         }
-        @media (orientation: portrait) {
-            #portrait-warning { display: flex; }
-        }
-
-        /* ÉCRAN INITIAL D'AUTORISATION */
+        @media (orientation: portrait) { #portrait-warning { display: flex; } }
         #ios-lockout {
-            position: fixed; top:0; left:0; width:100vw; height:100vh;
-            background: #06060c; z-index: 9999; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; padding: 20px; text-align: center;
+            position: fixed; top:0; left:0; width:100vw; height:100vh; background: #040408;
+            z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
-        #ios-lockout button {
-            background: var(--neon-green); color: black; font-weight: 900; padding: 12px 35px;
-            border: none; border-radius: 20px; margin-top: 15px; font-size: 0.95rem; text-transform: uppercase;
-            box-shadow: 0 0 15px rgba(0,255,102,0.4);
-        }
+        #ios-lockout button { background: var(--neon-green); color: black; font-weight: 900; padding: 10px 30px; border: none; border-radius: 20px; margin-top: 10px; font-size: 0.9rem;}
     </style>
 </head>
 <body>
 
-    <!-- BLOCAGE PORTRAIT -->
-    <div id="portrait-warning">
-        <span style="font-size: 3rem;">🔄</span>
-        <h2 style="margin-top: 15px;">MODE PAYSAGE REQUIS</h2>
-        <p style="color: var(--text-muted); margin-top: 5px; font-size: 0.9rem;">Veuillez tourner votre iPhone à l'horizontale pour afficher la télémétrie.</p>
-    </div>
+    <div id="portrait-warning"><h3>🔄 PIVOTEZ L'IPHONE A L'HORIZONTALE</h3></div>
 
-    <!-- OVERLAY DEMARRAGE -->
     <div id="ios-lockout">
-        <h2>🏎️ SIMBERTOUT TELEMETRY</h2>
-        <p style="color: var(--text-muted); margin-top: 5px; font-size: 0.85rem;">Tournez l'iPhone à l'horizontale puis validez.</p>
-        <button onclick="forceStartSensors()">DÉMARRER</button>
+        <h2>🏎️ SIMBERTOUT TELEMETRY DATA PRO</h2>
+        <button onclick="forceStartSensors()">OUVRIR LA SESSION</button>
     </div>
 
-    <!-- BARRE DE STATUT -->
     <div class="top-status-bar">
         <span id="top-clock">00:00:00</span>
-        <span id="top-weather">METEO : CALIBRAGE...</span>
-        <span id="wake-status" style="color: var(--neon-red);">💡 VEILLE : ACTIVE</span>
-        <span id="top-bat" class="status-online">BAT : --%</span>
+        <span id="top-gps-precision">GPS : RECHERCHE...</span>
+        <span id="wake-status" style="color: var(--neon-red);">ANTI-VEILLE : OFF</span>
+        <span id="top-bat">BAT : --%</span>
     </div>
 
-    <!-- SÉLECTEUR DE MODES -->
     <div class="mode-selector">
-        <button class="mode-tab active" id="tab-route" onclick="switchMode('route')">🛣️ Mode Route</button>
-        <button class="mode-tab" id="tab-dyno" onclick="switchMode('dyno')">📊 Banc Puissance</button>
-        <button class="mode-tab" id="tab-race" onclick="switchMode('race')">🏁 Mode Piste</button>
+        <button class="mode-tab active" id="tab-route" onclick="switchMode('route')">🛣️ Route</button>
+        <button class="mode-tab" id="tab-dyno" onclick="switchMode('dyno')">📊 Banc & Carburation</button>
+        <button class="mode-tab" id="tab-race" onclick="switchMode('race')">🏁 Piste (Chrono)</button>
     </div>
 
-    <!-- ZONE DES ECRANS -->
     <div class="screen-container">
 
-        <!-- 1. MODE ROUTE -->
         <div class="screen active" id="screen-route">
-            <div class="card">
-                <div class="card-label">Vitesse Actuelle</div>
-                <div class="card-value big-speed" id="route-speed">0<span class="unit" style="font-size: 1.2rem;">km/h</span></div>
-            </div>
-            <div class="card">
-                <div class="card-label">Cap / Boussole</div>
-                <div class="card-value" id="route-head" style="font-size: 1.8rem;">--°</div>
-                <div class="card-label" style="top: auto; bottom: 6px; font-size:0.6rem;" id="route-alt">Altitude: --m</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Force G Latérale</div>
-                <div class="card-value" id="route-g" style="font-size: 1.8rem; color: var(--neon-green);">0.00<span class="unit">G</span></div>
+            <div class="card"><div class="card-label">Vitesse</div><div class="card-value giant-speed" id="route-speed">0<span class="unit">km/h</span></div></div>
+            <div class="card"><div class="card-label" style="color: var(--neon-blue);">Régime</div><div class="card-value rpm-text uni-rpm">0<span class="unit">rpm</span></div></div>
+            <div style="display: grid; grid-template-rows: 1fr 1fr; gap: 5px;">
+                <div class="card"><div class="card-label">Vitesse Max</div><div class="card-value" id="route-max-speed" style="font-size: 1.3rem;">0</div></div>
+                <div class="card"><div class="card-label">Odomètre</div><div class="card-value" id="route-trip" style="font-size: 1.1rem;">0.0<span class="unit">km</span></div></div>
             </div>
         </div>
 
-        <!-- 2. MODE BANC DE PUISSANCE -->
         <div class="screen" id="screen-dyno">
-            <div class="config-bar">
-                <label for="weightInput">Poids Total Roulant :</label>
-                <input type="number" id="weightInput" value="165" onchange="saveWeight()">
-                <span class="unit" style="margin:0; color:#fff;">kg</span>
-            </div>
-            <div class="card" style="background: linear-gradient(180deg, rgba(255,170,0,0.03) 0%, var(--panel-bg) 100%);">
-                <div class="card-label" style="color: var(--neon-orange);">Puissance Instantanée</div>
-                <div class="card-value" id="dyno-power" style="font-size: 3.2rem; color: var(--neon-orange);">0.0<span class="unit" style="color:var(--neon-orange)">ch</span></div>
-            </div>
-            <div class="card">
-                <div class="card-label">Puissance Max Rec.</div>
-                <div class="card-value" id="dyno-max-power" style="font-size: 1.6rem;">0.0<span class="unit">ch</span></div>
-                <div class="card-label" style="top: auto; bottom: 6px; font-size:0.6rem;" id="dyno-accel">Accel: 0.00 m/s²</div>
-            </div>
-        </div>
-
-        <!-- 3. MODE PISTE (RACE) -->
-        <div class="screen" id="screen-race">
-            <div class="card full-height">
-                <div class="card-label">Chronomètre live</div>
-                <div class="card-value race-chrono" id="race-timer">00:00.00</div>
-                <div class="gate-btn" onclick="triggerVirtualGate()">
-                    <span id="gate-btn-text" style="font-size: 0.7rem; font-weight:bold; color:var(--neon-orange)">📍 Tag Ligne Top Chrono</span>
+            <div style="display: grid; grid-template-rows: 1.3fr 0.7fr; gap: 5px;">
+                <div class="card">
+                    <div class="card-label" style="color: var(--neon-orange);">Puissance instantanée</div>
+                    <div class="card-value" id="dyno-power" style="font-size: 2.6rem; color: var(--neon-orange);">0.0<span class="unit">ch</span></div>
+                </div>
+                <div class="card" style="flex-direction: row; gap: 10px;">
+                    <button class="action-btn" id="dyno-trigger-btn" onclick="toggleDynoRecord()">🏁 DEBUT DU TIR</button>
+                    <button class="action-btn" style="border-color:#333; color:#aaa;" onclick="openDynoHistory()">📂 ANALYSER TIRS</button>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-label" style="color: var(--neon-green)">Vitesse GPS</div>
-                <div class="card-value" id="race-speed" style="font-size: 1.8rem; color: var(--neon-green)">0</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Dernier Tour</div>
-                <div class="card-value" id="race-lastlap" style="font-size: 1.5rem;">--:--.--</div>
-            </div>
-            <div class="card">
-                <div class="card-label">Force G Max</div>
-                <div class="card-value" id="race-gmax" style="font-size: 1.5rem;">0.00<span class="unit">G</span></div>
-            </div>
-            <div class="card">
-                <div class="card-label">Signal GPS</div>
-                <div class="card-value" id="race-gps-acc" style="font-size: 1.2rem; color: var(--neon-orange);">SYNC...</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                <div class="card"><div class="card-label" style="color: var(--neon-blue);">Régime</div><div class="card-value rpm-text uni-rpm" style="font-size: 1.8rem;">0</div></div>
+                <div class="card"><div class="card-label" style="color: #ff5500;">Couple</div><div class="card-value" id="dyno-torque" style="font-size: 1.8rem; color: #ff5500;">0.0<span class="unit">Nm</span></div></div>
+                <div class="card" style="grid-column: span 2;"><div class="card-label">Records Session</div><div class="card-value" id="dyno-records-text" style="font-size: 1rem; color: var(--text-muted);">Max : 0.0 ch | 0.0 Nm</div></div>
             </div>
         </div>
 
+        <div class="screen" id="screen-race">
+            <div class="card">
+                <div class="card-label">Chronomètre Live</div>
+                <div class="card-value chrono-text" id="race-timer">00:00.00</div>
+                <div class="gate-btn" onclick="triggerVirtualGate()"><span id="gate-btn-text" style="font-size: 0.65rem; font-weight:bold; color:var(--neon-orange);">📍 Placer Ligne Top Chrono</span></div>
+            </div>
+            <div style="display: grid; grid-template-rows: 1fr 1fr; gap: 5px;">
+                <div class="card"><div class="card-label" style="color: var(--neon-blue);">Régime</div><div class="card-value rpm-text uni-rpm" style="font-size: 1.8rem;">0</div></div>
+                <div class="card"><div class="card-label" style="color: var(--neon-green);">Vitesse GPS</div><div class="card-value" id="race-speed" style="font-size: 1.6rem; color: var(--neon-green);">0</div></div>
+            </div>
+            <div style="display: grid; grid-template-rows: 1fr 1fr auto; gap: 5px;">
+                <div class="card"><div class="card-label">Dernier Tour</div><div class="card-value" id="race-lastlap" style="font-size: 1.2rem;">--:--.--</div></div>
+                <div class="card"><div class="card-label" style="color: var(--neon-green);">Meilleur Tour</div><div class="card-value" id="race-bestlap" style="font-size: 1.2rem; color: var(--neon-green);">--:--.--</div></div>
+                <button class="action-btn" style="border-color: var(--neon-red); color: var(--neon-red); width: 100%; font-size: 0.65rem;" onclick="stopRaceSession()">🏁 QUITTER & ANALYSER</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="modal-race-report">
+        <div class="modal-box">
+            <div class="modal-header"><h3>🏁 FIN DE SESSION PISTE - RECAP TOURS</h3><span style="font-size:0.8rem; color:var(--text-muted);" id="race-total-duration">Durée: --</span></div>
+            <div class="modal-body">
+                <div class="data-list" id="race-laps-box"></div>
+            </div>
+            <div class="btn-group">
+                <button class="modal-btn btn-close" onclick="closeModal('modal-race-report')">SKIPPER (EFFACER)</button>
+                <button class="modal-btn btn-green" onclick="downloadRaceCSV()">💾 EXPEDIER & TELECHARGER LE FICHIER</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-dyno-report">
+        <div class="modal-box">
+            <div class="modal-header"><h3>📊 RECAP CARB / COURBES DE PUISSANCE</h3></div>
+            <div class="modal-body">
+                <div class="data-list" id="dyno-runs-list" style="max-width: 180px;"></div>
+                <div class="chart-container">
+                    <canvas id="dynoChart"></canvas>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="modal-btn btn-close" onclick="closeModal('modal-dyno-report')">FERMER</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="universal-config-bar">
+        <div class="config-group"><span>Poids:</span><input type="number" id="cfg-weight" value="165" onchange="updateSetup()"><span>kg</span></div>
+        <div class="config-group"><span>⚙️ Pignon:</span><input type="number" id="cfg-pignon" value="11" onchange="updateSetup()"><span>d</span></div>
+        <div class="config-group"><span>Couronne:</span><input type="number" id="cfg-couronne" value="80" onchange="updateSetup()"><span>d</span></div>
+        <div class="config-group"><span>⭕ Ø Pneu:</span><input type="number" id="cfg-pneu" value="27.5" step="0.1" onchange="updateSetup()"><span>cm</span></div>
     </div>
 
     <script>
-        let vehicleWeight = parseFloat(localStorage.getItem('simbertout_weight')) || 165;
-        document.getElementById('weightInput').value = vehicleWeight;
+        let setup = {
+            weight: parseFloat(localStorage.getItem('k_weight')) || 165,
+            pignon: parseInt(localStorage.getItem('k_pignon')) || 11,
+            couronne: parseInt(localStorage.getItem('k_couronne')) || 80,
+            pneuDiameter: parseFloat(localStorage.getItem('k_pneu')) || 27.5
+        };
+
+        document.getElementById('cfg-weight').value = setup.weight;
+        document.getElementById('cfg-pignon').value = setup.pignon;
+        document.getElementById('cfg-couronne').value = setup.couronne;
+        document.getElementById('cfg-pneu').value = setup.pneuDiameter;
 
         let currentSpeedMS = 0; let lastSpeedMS = 0; let lastSpeedTime = Date.now();
-        let maxPowerRealized = 0; let maxGForceRecorded = 0;
-        let virtualGateCoords = null; let previousCoords = { lat: null, lon: null };
-        let lapStartTime = 0; let chronoInterval = null;
-        let wakeLock = null;
+        let maxSpeedKMH = 0; let maxPower = 0; let maxTorque = 0; let totalDistanceMeters = 0;
+        let lastLat = null; let lastLon = null; let moteurRpm = 0;
 
-        // --- FONCTION DE VERROUILLAGE ANTI-VEILLE ---
-        async function requestWakeLock() {
-            try {
-                if ('wakeLock' in navigator) {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                    document.getElementById('wake-status').innerText = "💡 ANTI-VEILLE : OK";
-                    document.getElementById('wake-status').style.color = "var(--neon-green)";
-                    
-                    // Si l'application revient de l'arrière plan, on réactive le verrou
-                    wakeLock.addEventListener('release', () => {
-                        console.log('Wake Lock relâché');
-                    });
-                }
-            } catch (err) {
-                document.getElementById('wake-status').innerText = "💡 ANTI-VEILLE : ERREUR";
-                document.getElementById('wake-status').style.color = "var(--neon-red)";
-            }
+        // DATA SESSIONS PISTE
+        let virtualGateCoords = null; let lapStartTime = 0; let bestLapTime = Infinity;
+        let chronoInterval = null; let sessionLaps = []; let sessionStartTime = 0;
+
+        // DATA BANC DE PUISSANCE
+        let isDynoRecording = false;
+        let currentRunData = []; // Données du tir en cours
+        let savedDynoRuns = [];  // Tableau de tous les tirs mémorisés
+        let dynoChartInstance = null;
+
+        function updateSetup() {
+            setup.weight = parseFloat(document.getElementById('cfg-weight').value) || 165;
+            setup.pignon = parseInt(document.getElementById('cfg-pignon').value) || 11;
+            setup.couronne = parseInt(document.getElementById('cfg-couronne').value) || 80;
+            setup.pneuDiameter = parseFloat(document.getElementById('cfg-pneu').value) || 27.5;
+            localStorage.setItem('k_weight', setup.weight);
+            localStorage.setItem('k_pignon', setup.pignon);
+            localStorage.setItem('k_couronne', setup.couronne);
+            localStorage.setItem('k_pneu', setup.pneuDiameter);
         }
-
-        // Réactiver automatiquement si on quitte et revient sur l'appli
-        document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-                await requestWakeLock();
-            }
-        });
 
         function forceStartSensors() {
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                DeviceMotionEvent.requestPermission()
-                    .then(state => {
-                        if (state === 'granted') {
-                            document.getElementById('ios-lockout').style.display = 'none';
-                            startHardwareEngines();
-                            requestWakeLock(); // Lance l'anti-veille au clic
-                        }
-                    }).catch(console.error);
-            } else {
-                document.getElementById('ios-lockout').style.display = 'none';
-                startHardwareEngines();
-                requestWakeLock();
-            }
+                DeviceMotionEvent.requestPermission().then(state => { if (state === 'granted') { initAll(); } }).catch(console.error);
+            } else { initAll(); }
         }
 
-        function startHardwareEngines() {
+        function initAll() {
+            document.getElementById('ios-lockout').style.display = 'none';
+            sessionStartTime = Date.now();
+            
+            // Éviter la mise en veille
+            if ('wakeLock' in navigator) {
+                navigator.wakeLock.request('screen').then(() => {
+                    document.getElementById('wake-status').innerText = "ANTI-VEILLE : ON";
+                    document.getElementById('wake-status').style.color = "var(--neon-green)";
+                }).catch(()=>{});
+            }
+
             setInterval(() => {
-                const d = new Date();
-                document.getElementById('top-clock').innerText = d.toTimeString().split(' ')[0];
+                document.getElementById('top-clock').innerText = new Date().toTimeString().split(' ')[0];
             }, 1000);
 
             if (navigator.getBattery) {
@@ -347,83 +325,212 @@
                     let lon = position.coords.longitude;
                     let speedKMH = position.coords.speed ? (position.coords.speed * 3.6) : 0;
                     currentSpeedMS = position.coords.speed || 0;
-                    let altitude = position.coords.altitude ? Math.round(position.coords.altitude) : "--";
                     let accuracy = position.coords.accuracy ? Math.round(position.coords.accuracy) : 0;
 
-                    document.getElementById('route-speed').innerHTML = `${Math.round(speedKMH)}<span class="unit">km/h</span>`;
-                    document.getElementById('route-alt').innerText = `Altitude: ${altitude}m`;
-                    document.getElementById('race-speed').innerText = Math.round(speedKMH);
-                    document.getElementById('race-gps-acc').innerText = `± ${accuracy}m`;
-                    document.getElementById('race-gps-acc').style.color = accuracy < 10 ? 'var(--neon-green)' : 'var(--neon-orange)';
+                    document.getElementById('top-gps-precision').innerText = `GPS : ±${accuracy}m`;
+                    document.getElementById('top-gps-precision').style.color = accuracy < 8 ? 'var(--neon-green)' : 'var(--neon-orange)';
 
+                    if (lastLat !== null && lastLon !== null && currentSpeedMS > 0.5) {
+                        let d = Math.sqrt(Math.pow(lat - lastLat, 2) + Math.pow(lon - lastLon, 2)) * 111139;
+                        if (d < 50) totalDistanceMeters += d;
+                    }
+                    lastLat = lat; lastLon = lon;
+
+                    // COMPTE TOURS
+                    let pneuCircumferenceMeters = (setup.pneuDiameter / 100) * Math.PI;
+                    let ratioMecanique = setup.couronne / setup.pignon;
+                    moteurRpm = Math.round(((currentSpeedMS * 60) / pneuCircumferenceMeters) * ratioMecanique);
+                    if (moteurRpm < 0 || isNaN(moteurRpm)) moteurRpm = 0;
+
+                    document.querySelectorAll('.uni-rpm').forEach(el => el.innerHTML = `${moteurRpm}<span class="unit">rpm</span>`);
+                    document.getElementById('route-speed').innerHTML = `${Math.round(speedKMH)}<span class="unit">km/h</span>`;
+                    document.getElementById('race-speed').innerText = Math.round(speedKMH);
+                    
+                    if (speedKMH > maxSpeedKMH) {
+                        maxSpeedKMH = speedKMH;
+                        document.getElementById('route-max-speed').innerText = Math.round(maxSpeedKMH);
+                    }
+                    document.getElementById('route-trip').innerHTML = `${(totalDistanceMeters / 1000).toFixed(1)}<span class="unit">km</span>`;
+
+                    // CALCULS PUISSANCE & COUPLE
                     let now = Date.now();
                     let dt = (now - lastSpeedTime) / 1000;
                     if (dt > 0.2) {
                         let acceleration = (currentSpeedMS - lastSpeedMS) / dt;
                         if (acceleration < 0) acceleration = 0;
-                        let force = vehicleWeight * acceleration;
+                        let force = setup.weight * acceleration;
                         let powerWatts = force * currentSpeedMS;
                         let powerCH = powerWatts / 735.5;
 
-                        document.getElementById('dyno-accel').innerText = `Accel: ${acceleration.toFixed(2)} m/s²`;
-                        document.getElementById('dyno-power').innerHTML = `${powerCH.toFixed(1)}<span class="unit">ch</span>`;
-
-                        if (powerCH > maxPowerRealized) {
-                            maxPowerRealized = powerCH;
-                            document.getElementById('dyno-max-power').innerHTML = `${maxPowerRealized.toFixed(1)}<span class="unit">ch</span>`;
+                        let torqueNm = 0;
+                        if (moteurRpm > 500) {
+                            torqueNm = powerWatts / ((moteurRpm * 2 * Math.PI) / 60);
                         }
+
+                        document.getElementById('dyno-power').innerHTML = `${powerCH.toFixed(1)}<span class="unit">ch</span>`;
+                        document.getElementById('dyno-torque').innerHTML = `${torqueNm.toFixed(1)}<span class="unit">Nm</span>`;
+
+                        if (powerCH > maxPower) maxPower = powerCH;
+                        if (torqueNm > maxTorque) maxTorque = torqueNm;
+                        document.getElementById('dyno-records-text').innerText = `Max : ${maxPower.toFixed(1)} ch | ${maxTorque.toFixed(1)} Nm`;
+
+                        // Si on est en train d'enregistrer un tir de carburation
+                        if (isDynoRecording && moteurRpm > 1000) {
+                            currentRunData.push({ rpm: moteurRpm, hp: parseFloat(powerCH.toFixed(1)), torque: parseFloat(torqueNm.toFixed(1)) });
+                        }
+
                         lastSpeedMS = currentSpeedMS; lastSpeedTime = now;
                     }
 
-                    if (virtualGateCoords && previousCoords.lat !== null) {
-                        let d = Math.sqrt(Math.pow(lat - virtualGateCoords.lat, 2) + Math.pow(lon - virtualGateCoords.lon, 2));
-                        if (d < 0.00015) {
+                    // DETECTION LIGNE ARRIVEE PISTE
+                    if (virtualGateCoords) {
+                        let distanceToGate = Math.sqrt(Math.pow(lat - virtualGateCoords.lat, 2) + Math.pow(lon - virtualGateCoords.lon, 2));
+                        if (distanceToGate < 0.00015) {
                             let lapTime = Date.now() - lapStartTime;
                             lapStartTime = Date.now();
+                            sessionLaps.push(lapTime);
                             document.getElementById('race-lastlap').innerText = formatTime(lapTime);
+                            if (lapTime < bestLapTime) {
+                                bestLapTime = lapTime;
+                                document.getElementById('race-bestlap').innerText = formatTime(bestLapTime);
+                            }
                         }
-                    }
-                    previousCoords.lat = lat; previousCoords.lon = lon;
-
-                    if (document.getElementById('top-weather').innerText.includes("CALIBRAGE")) {
-                        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,surface_pressure`)
-                        .then(res => res.json()).then(data => {
-                            document.getElementById('top-weather').innerText = `${data.current.temperature_2m}°C | ${Math.round(data.current.surface_pressure)} hPa`;
-                        }).catch(() => document.getElementById('top-weather').innerText = "METEO OK");
                     }
                 }, () => {}, { enableHighAccuracy: true, maximumAge: 0 });
             }
-
-            window.addEventListener('deviceorientation', (e) => {
-                if(e.alpha !== null) document.getElementById('route-head').innerText = `${Math.round(e.alpha)}°`;
-            }, true);
-
-            window.addEventListener('devicemotion', (event) => {
-                let ax = event.accelerationIncludingGravity.x || 0;
-                let ay = event.accelerationIncludingGravity.y || 0;
-                let az = event.accelerationIncludingGravity.z || 0;
-                let totalG = Math.sqrt(ax*ax + ay*ay + az*az) / 9.81;
-                let netG = Math.abs(totalG - 1);
-
-                document.getElementById('route-g').innerHTML = `${netG.toFixed(2)}<span class="unit">G</span>`;
-                if (netG > maxGForceRecorded) {
-                    maxGForceRecorded = netG;
-                    document.getElementById('race-gmax').innerHTML = `${maxGForceRecorded.toFixed(2)}<span class="unit">G</span>`;
-                }
-            });
         }
 
         function triggerVirtualGate() {
-            if (previousCoords.lat !== null) {
-                virtualGateCoords = { lat: previousCoords.lat, lon: previousCoords.lon };
-                document.getElementById('gate-btn-text').innerText = "🔒 LIGNE FIXÉE";
+            if (lastLat !== null) {
+                virtualGateCoords = { lat: lastLat, lon: lastLon };
+                document.getElementById('gate-btn-text').innerText = "🔒 TIMING ACTIF";
                 document.getElementById('gate-btn-text').style.color = "var(--neon-green)";
                 lapStartTime = Date.now();
+                sessionLaps = [];
                 if(chronoInterval) clearInterval(chronoInterval);
                 chronoInterval = setInterval(() => {
                     document.getElementById('race-timer').innerText = formatTime(Date.now() - lapStartTime);
                 }, 30);
-            } else { alert("GPS instable."); }
+            }
+        }
+
+        // --- GESTION FIN DE SESSION PISTE ---
+        function stopRaceSession() {
+            if(chronoInterval) clearInterval(chronoInterval);
+            let elapsed = Date.now() - sessionStartTime;
+            document.getElementById('race-total-duration').innerText = `Temps de piste total : ${Math.floor(elapsed/60000)} min`;
+            
+            let html = "";
+            if (sessionLaps.length === 0) {
+                html = "<div class='data-row'>Aucun tour mémorisé. Repassez sur la ligne.</div>";
+            } else {
+                sessionLaps.forEach((time, index) => {
+                    let isBest = time === bestLapTime;
+                    html += `<div class="data-row ${isBest ? 'best-lap-row' : ''}"><span>Tour ${index + 1}</span><span>${formatTime(time)} ${isBest ? '⭐ BEST' : ''}</span></div>`;
+                });
+            }
+            document.getElementById('race-laps-box').innerHTML = html;
+            document.getElementById('modal-race-report').style.display = 'flex';
+        }
+
+        function downloadRaceCSV() {
+            let filename = prompt("Nommez le fichier de votre session :", `Session_Piste_${new Date().toLocaleDateString().replace(/\//g,'-')}`);
+            if(!filename) return;
+
+            let csvContent = "data:text/csv;charset=utf-8,Tour,Temps (ms),Formate\n";
+            sessionLaps.forEach((time, index) => {
+                csvContent += `${index + 1},${time},${formatTime(time)}\n`;
+            });
+
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `${filename}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- GESTION ENREGISTREMENT BANC DE PUISSANCE ---
+        function toggleDynoRecord() {
+            let btn = document.getElementById('dyno-trigger-btn');
+            if (!isDynoRecording) {
+                isDynoRecording = true;
+                currentRunData = [];
+                btn.innerText = "🛑 FIN DU TIR (SAUVER)";
+                btn.classList.add('recording');
+            } else {
+                isDynoRecording = false;
+                btn.innerText = "🏁 DEBUT DU TIR";
+                btn.classList.remove('recording');
+                
+                if(currentRunData.length > 5) {
+                    savedDynoRuns.push({ id: savedDynoRuns.length + 1, timestamp: new Date().toLocaleTimeString(), data: currentRunData });
+                    openDynoHistory();
+                    showRunChart(savedDynoRuns.length - 1);
+                } else {
+                    alert("Tir trop court. Accélérez sur une plus longue distance pour enregistrer des données.");
+                }
+            }
+        }
+
+        function openDynoHistory() {
+            let html = "";
+            if(savedDynoRuns.length === 0) {
+                html = "<div style='font-size:0.75rem; color:var(--text-muted);'>Aucun tir enregistré pour le moment.</div>";
+            } else {
+                savedDynoRuns.forEach((run, index) => {
+                    html += `<div class="data-row" style="cursor:pointer; background:rgba(255,255,255,0.02); margin-bottom:3px; padding:6px;" onclick="showRunChart(${index})">
+                        <span>📊 Tir #${run.id}</span><span style="font-size:0.65rem; color:var(--neon-orange);">${run.timestamp}</span>
+                    </div>`;
+                });
+            }
+            document.getElementById('dyno-runs-list').innerHTML = html;
+            document.getElementById('modal-dyno-report').style.display = 'flex';
+            if(savedDynoRuns.length > 0 && !dynoChartInstance) showRunChart(savedDynoRuns.length - 1);
+        }
+
+        function showRunChart(index) {
+            let run = savedDynoRuns[index];
+            // Trier les données par RPM croissants pour éviter les zigzags sur la courbe
+            let sortedData = run.data.sort((a,b) => a.rpm - b.rpm);
+            
+            // Échantillonner pour lisser le rendu par tranches de 500 RPM
+            let pointsByRpm = {};
+            sortedData.forEach(pt => {
+                let bucket = Math.round(pt.rpm / 400) * 400; // Regrouper par pas de 400 RPM
+                if(!pointsByRpm[bucket]) pointsByRpm[bucket] = { hp: [], torque: [] };
+                pointsByRpm[bucket].hp.push(pt.hp);
+                pointsByRpm[bucket].torque.push(pt.torque);
+            });
+
+            let labels = Object.keys(pointsByRpm).map(Number).sort((a,b)=>a-b);
+            let hpData = labels.map(r => pointsByRpm[r].hp.reduce((a,b)=>a+b,0) / pointsByRpm[r].hp.length);
+            let torqueData = labels.map(r => pointsByRpm[r].torque.reduce((a,b)=>a+b,0) / pointsByRpm[r].torque.length);
+
+            let ctx = document.getElementById('dynoChart').getContext('2d');
+            if(dynoChartInstance) dynoChartInstance.destroy();
+
+            dynoChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Puissance (ch)', data: hpData, borderColor: '#ffaa00', backgroundColor: 'rgba(255,170,0,0.1)', yAxisID: 'y', tension: 0.3, borderWidth: 3 },
+                        { label: 'Couple (Nm)', data: torqueData, borderColor: '#ff4500', backgroundColor: 'rgba(255,69,0,0.1)', yAxisID: 'y1', tension: 0.3, borderWidth: 3 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'Régime Moteur (RPM)', color: '#6c757d', font: { size: 9 } }, ticks: { color: '#6c757d', font: { size: 9 } } },
+                        y: { position: 'left', grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'Puissance (ch)', color: '#ffaa00', font: { size: 9 } }, ticks: { color: '#ffaa00', font: { size: 9 } } },
+                        y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Couple (Nm)', color: '#ff4500', font: { size: 9 } }, ticks: { color: '#ff4500', font: { size: 9 } } }
+                    },
+                    plugins: { legend: { labels: { color: '#fff', font: { size: 9 } } } }
+                }
+            });
         }
 
         function switchMode(modeName) {
@@ -433,11 +540,7 @@
             document.getElementById(`screen-${modeName}`).classList.add('active');
         }
 
-        function saveWeight() {
-            let val = parseFloat(document.getElementById('weightInput').value);
-            if(val > 0) { vehicleWeight = val; localStorage.setItem('simbertout_weight', val); }
-        }
-
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function formatTime(ms) {
             let min = Math.floor(ms / 60000).toString().padStart(2, '0');
             let sec = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
