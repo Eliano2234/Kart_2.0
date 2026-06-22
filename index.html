@@ -75,13 +75,16 @@
             font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase;
             font-weight: 700; letter-spacing: 0.5px; position: absolute; top: 4px; left: 6px;
         }
+        .card-subvalue {
+            font-size: 0.75rem; color: var(--text-muted); font-weight: bold; margin-top: 2px;
+        }
         .card-value { font-size: 1.8rem; font-weight: 900; font-family: monospace, sans-serif; }
         .unit { font-size: 0.7rem; color: var(--text-muted); font-weight: 500; margin-left: 1px; }
         .rpm-text { color: var(--neon-blue); text-shadow: 0 0 10px rgba(0,210,255,0.15); }
 
         /* SCENE COUCHEE ROUTE */
         #screen-route { grid-template-columns: 1.4fr 1fr 1fr; }
-        .giant-speed { font-size: 4.2rem; color: var(--neon-green); }
+        .giant-speed { font-size: 3.6rem; color: var(--neon-green); }
 
         /* SCENE COUCHEE DYNO */
         #screen-dyno { grid-template-columns: 1fr 1.2fr; }
@@ -95,6 +98,7 @@
         /* SCENE COUCHEE PISTE */
         #screen-race { grid-template-columns: 1.2fr 1fr 1fr; }
         .chrono-text { font-size: 2.8rem; color: var(--neon-red); }
+        .gate-btn { background: rgba(0,0,0,0.4); border: 1px solid var(--border-glow); padding: 4px 8px; border-radius: 4px; margin-top: 5px; cursor: pointer;}
 
         /* FENÊTRES MODALES PLEIN ÉCRAN (FIN DE SESSION ET RAPPORTS) */
         .modal-overlay {
@@ -111,8 +115,9 @@
         
         /* LISTES DE DONNÉES */
         .data-list { flex: 1; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px; overflow-y: auto; font-family: monospace; font-size: 0.8rem; }
-        .data-row { padding: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; justify-content: space-between; }
+        .data-row { padding: 4px; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; justify-content: space-between; align-items: center; }
         .best-lap-row { color: var(--neon-green); font-weight: bold; background: rgba(0,255,102,0.05); }
+        .delete-btn { background: var(--neon-red); color: white; border: none; padding: 2px 6px; border-radius: 3px; font-size: 0.65rem; cursor: pointer; }
 
         /* GRAPHIQUE */
         .chart-container { flex: 2; position: relative; background: rgba(0,0,0,0.2); border-radius: 4px; padding: 5px; }
@@ -159,8 +164,7 @@
     <div class="top-status-bar">
         <span id="top-clock">00:00:00</span>
         <span id="top-gps-precision">GPS : RECHERCHE...</span>
-        <span id="wake-status" style="color: var(--neon-red);">ANTI-VEILLE : OFF</span>
-        <span id="top-bat">BAT : --%</span>
+        <span id="top-temp">TEMP : --°C</span>
     </div>
 
     <div class="mode-selector">
@@ -172,11 +176,20 @@
     <div class="screen-container">
 
         <div class="screen active" id="screen-route">
-            <div class="card"><div class="card-label">Vitesse</div><div class="card-value giant-speed" id="route-speed">0<span class="unit">km/h</span></div></div>
-            <div class="card"><div class="card-label" style="color: var(--neon-blue);">Régime</div><div class="card-value rpm-text uni-rpm">0<span class="unit">rpm</span></div></div>
-            <div style="display: grid; grid-template-rows: 1fr 1fr; gap: 5px;">
-                <div class="card"><div class="card-label">Vitesse Max</div><div class="card-value" id="route-max-speed" style="font-size: 1.3rem;">0</div></div>
-                <div class="card"><div class="card-label">Odomètre</div><div class="card-value" id="route-trip" style="font-size: 1.1rem;">0.0<span class="unit">km</span></div></div>
+            <div class="card">
+                <div class="card-label">Vitesse</div>
+                <div class="card-value giant-speed" id="route-speed">0<span class="unit">km/h</span></div>
+                <div class="card-subvalue">MAX: <span id="route-max-speed-sub">0</span> km/h</div>
+            </div>
+            <div class="card">
+                <div class="card-label" style="color: var(--neon-blue);">Régime</div>
+                <div class="card-value rpm-text uni-rpm">0<span class="unit">rpm</span></div>
+                <div class="card-subvalue" style="color: rgba(0,210,255,0.6);">MAX: <span id="uni-max-rpm-sub">0</span> rpm</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Odomètre Global</div>
+                <div class="card-value" id="route-trip" style="font-size: 1.5rem; margin-top:5px;">0.00<span class="unit">km</span></div>
+                <div class="card-value" id="route-duration" style="font-size: 1.1rem; color: var(--neon-green); margin-top: 2px;">00:00:00</div>
             </div>
         </div>
 
@@ -202,11 +215,19 @@
             <div class="card">
                 <div class="card-label">Chronomètre Live</div>
                 <div class="card-value chrono-text" id="race-timer">00:00.00</div>
-                <div class="gate-btn" onclick="triggerVirtualGate()"><span id="gate-btn-text" style="font-size: 0.65rem; font-weight:bold; color:var(--neon-orange);">📍 Placer Ligne Top Chrono</span></div>
+                <div class="gate-btn" onclick="triggerVirtualGate()"><span id="gate-btn-text" style="font-size: 0.65rem; font-weight:bold; color:var(--neon-orange);">📍 Placer Ligne Top Chrono (14m)</span></div>
             </div>
             <div style="display: grid; grid-template-rows: 1fr 1fr; gap: 5px;">
-                <div class="card"><div class="card-label" style="color: var(--neon-blue);">Régime</div><div class="card-value rpm-text uni-rpm" style="font-size: 1.8rem;">0</div></div>
-                <div class="card"><div class="card-label" style="color: var(--neon-green);">Vitesse GPS</div><div class="card-value" id="race-speed" style="font-size: 1.6rem; color: var(--neon-green);">0</div></div>
+                <div class="card">
+                    <div class="card-label" style="color: var(--neon-blue);">Régime</div>
+                    <div class="card-value rpm-text uni-rpm" style="font-size: 1.6rem;">0</div>
+                    <div class="card-subvalue" style="color: rgba(0,210,255,0.6); font-size: 0.65rem;">MAX: <span id="race-max-rpm-sub">0</span> rpm</div>
+                </div>
+                <div class="card">
+                    <div class="card-label" style="color: var(--neon-green);">Vitesse GPS</div>
+                    <div class="card-value" id="race-speed" style="font-size: 1.6rem; color: var(--neon-green);">0</div>
+                    <div class="card-subvalue" style="font-size: 0.65rem;">MAX: <span id="race-max-speed-sub">0</span> km/h</div>
+                </div>
             </div>
             <div style="display: grid; grid-template-rows: 1fr 1fr auto; gap: 5px;">
                 <div class="card"><div class="card-label">Dernier Tour</div><div class="card-value" id="race-lastlap" style="font-size: 1.2rem;">--:--.--</div></div>
@@ -224,8 +245,8 @@
                 <div class="data-list" id="race-laps-box"></div>
             </div>
             <div class="btn-group">
-                <button class="modal-btn btn-close" onclick="closeModal('modal-race-report')">SKIPPER (EFFACER)</button>
-                <button class="modal-btn btn-green" onclick="downloadRaceCSV()">💾 EXPEDIER & TELECHARGER LE FICHIER</button>
+                <div class="modal-btn btn-close" onclick="closeModal('modal-race-report')">SKIPPER (EFFACER)</div>
+                <div class="modal-btn btn-green" onclick="downloadRaceCSV()">💾 EXPEDIER & TELECHARGER LE FICHIER</div>
             </div>
         </div>
     </div>
@@ -234,13 +255,13 @@
         <div class="modal-box">
             <div class="modal-header"><h3>📊 RECAP CARB / COURBES DE PUISSANCE</h3></div>
             <div class="modal-body">
-                <div class="data-list" id="dyno-runs-list" style="max-width: 180px;"></div>
+                <div class="data-list" id="dyno-runs-list" style="max-width: 220px;"></div>
                 <div class="chart-container">
                     <canvas id="dynoChart"></canvas>
                 </div>
             </div>
             <div class="btn-group">
-                <button class="modal-btn btn-close" onclick="closeModal('modal-dyno-report')">FERMER</button>
+                <div class="modal-btn btn-close" onclick="closeModal('modal-dyno-report')">FERMER</div>
             </div>
         </div>
     </div>
@@ -266,17 +287,18 @@
         document.getElementById('cfg-pneu').value = setup.pneuDiameter;
 
         let currentSpeedMS = 0; let lastSpeedMS = 0; let lastSpeedTime = Date.now();
-        let maxSpeedKMH = 0; let maxPower = 0; let maxTorque = 0; let totalDistanceMeters = 0;
+        let maxSpeedKMH = 0; let maxMoteurRpm = 0; let maxPower = 0; let maxTorque = 0; let totalDistanceMeters = 0;
         let lastLat = null; let lastLon = null; let moteurRpm = 0;
 
         // DATA SESSIONS PISTE
-        let virtualGateCoords = null; let lapStartTime = 0; let bestLapTime = Infinity;
+        let virtualGateLine = null; // Contiendra {p1: {x, y}, p2: {x, y}} en coordonnées locales approximées
+        let lapStartTime = 0; let bestLapTime = Infinity;
         let chronoInterval = null; let sessionLaps = []; let sessionStartTime = 0;
 
-        // DATA BANC DE PUISSANCE
+        // DATA BANC DE PUISSANCE (Persistant)
         let isDynoRecording = false;
-        let currentRunData = []; // Données du tir en cours
-        let savedDynoRuns = [];  // Tableau de tous les tirs mémorisés
+        let currentRunData = []; 
+        let savedDynoRuns = JSON.parse(localStorage.getItem('saved_dyno_runs')) || [];
         let dynoChartInstance = null;
 
         function updateSetup() {
@@ -296,63 +318,85 @@
             } else { initAll(); }
         }
 
+        // Météo API
+        function fetchWeather(lat, lon) {
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
+                .then(res => res.json())
+                .then(data => {
+                    if(data && data.current_weather) {
+                        document.getElementById('top-temp').innerText = `TEMP : ${Math.round(data.current_weather.temperature)}°C`;
+                    }
+                }).catch(()=>{});
+        }
+
         function initAll() {
             document.getElementById('ios-lockout').style.display = 'none';
             sessionStartTime = Date.now();
             
-            // Éviter la mise en veille
             if ('wakeLock' in navigator) {
-                navigator.wakeLock.request('screen').then(() => {
-                    document.getElementById('wake-status').innerText = "ANTI-VEILLE : ON";
-                    document.getElementById('wake-status').style.color = "var(--neon-green)";
-                }).catch(()=>{});
+                navigator.wakeLock.request('screen').catch(()=>{});
             }
 
             setInterval(() => {
                 document.getElementById('top-clock').innerText = new Date().toTimeString().split(' ')[0];
+                
+                // Odomètre - Temps de fonctionnement cumulé
+                let elapsedMs = Date.now() - sessionStartTime;
+                let hrs = Math.floor(elapsedMs / 3600000).toString().padStart(2, '0');
+                let mins = Math.floor((elapsedMs % 3600000) / 60000).toString().padStart(2, '0');
+                let secs = Math.floor((elapsedMs % 60000) / 1000).toString().padStart(2, '0');
+                document.getElementById('route-duration').innerText = `${hrs}:${mins}:${secs}`;
             }, 1000);
 
-            if (navigator.getBattery) {
-                navigator.getBattery().then(b => {
-                    const r = () => document.getElementById('top-bat').innerText = `BAT : ${Math.round(b.level * 100)}%`;
-                    r(); b.onlevelchange = r;
-                });
-            }
-
             if (navigator.geolocation) {
+                let weatherFetched = false;
                 navigator.geolocation.watchPosition((position) => {
                     let lat = position.coords.latitude;
                     let lon = position.coords.longitude;
                     let speedKMH = position.coords.speed ? (position.coords.speed * 3.6) : 0;
                     currentSpeedMS = position.coords.speed || 0;
                     let accuracy = position.coords.accuracy ? Math.round(position.coords.accuracy) : 0;
+                    let heading = position.coords.heading; // Degrés par rapport au Nord (0-360)
 
                     document.getElementById('top-gps-precision').innerText = `GPS : ±${accuracy}m`;
                     document.getElementById('top-gps-precision').style.color = accuracy < 8 ? 'var(--neon-green)' : 'var(--neon-orange)';
 
+                    if(!weatherFetched) {
+                        fetchWeather(lat, lon);
+                        weatherFetched = true;
+                    }
+
+                    // Distance odomètre
                     if (lastLat !== null && lastLon !== null && currentSpeedMS > 0.5) {
                         let d = Math.sqrt(Math.pow(lat - lastLat, 2) + Math.pow(lon - lastLon, 2)) * 111139;
                         if (d < 50) totalDistanceMeters += d;
                     }
-                    lastLat = lat; lastLon = lon;
 
-                    // COMPTE TOURS
+                    // Calcul RPM moteur
                     let pneuCircumferenceMeters = (setup.pneuDiameter / 100) * Math.PI;
                     let ratioMecanique = setup.couronne / setup.pignon;
                     moteurRpm = Math.round(((currentSpeedMS * 60) / pneuCircumferenceMeters) * ratioMecanique);
                     if (moteurRpm < 0 || isNaN(moteurRpm)) moteurRpm = 0;
 
+                    // Mise à jour de l'affichage instantané et Max réduits
                     document.querySelectorAll('.uni-rpm').forEach(el => el.innerHTML = `${moteurRpm}<span class="unit">rpm</span>`);
                     document.getElementById('route-speed').innerHTML = `${Math.round(speedKMH)}<span class="unit">km/h</span>`;
                     document.getElementById('race-speed').innerText = Math.round(speedKMH);
                     
                     if (speedKMH > maxSpeedKMH) {
                         maxSpeedKMH = speedKMH;
-                        document.getElementById('route-max-speed').innerText = Math.round(maxSpeedKMH);
+                        document.getElementById('route-max-speed-sub').innerText = Math.round(maxSpeedKMH);
+                        document.getElementById('race-max-speed-sub').innerText = Math.round(maxSpeedKMH);
                     }
-                    document.getElementById('route-trip').innerHTML = `${(totalDistanceMeters / 1000).toFixed(1)}<span class="unit">km</span>`;
+                    if (moteurRpm > maxMoteurRpm) {
+                        maxMoteurRpm = moteurRpm;
+                        document.getElementById('uni-max-rpm-sub').innerText = maxMoteurRpm;
+                        document.getElementById('race-max-rpm-sub').innerText = maxMoteurRpm;
+                    }
 
-                    // CALCULS PUISSANCE & COUPLE
+                    document.getElementById('route-trip').innerHTML = `${(totalDistanceMeters / 1000).toFixed(2)}<span class="unit">km</span>`;
+
+                    // Calculs Banc (Puissance / Couple)
                     let now = Date.now();
                     let dt = (now - lastSpeedTime) / 1000;
                     if (dt > 0.2) {
@@ -374,55 +418,83 @@
                         if (torqueNm > maxTorque) maxTorque = torqueNm;
                         document.getElementById('dyno-records-text').innerText = `Max : ${maxPower.toFixed(1)} ch | ${maxTorque.toFixed(1)} Nm`;
 
-                        // Si on est en train d'enregistrer un tir de carburation
                         if (isDynoRecording && moteurRpm > 1000) {
                             currentRunData.push({ rpm: moteurRpm, hp: parseFloat(powerCH.toFixed(1)), torque: parseFloat(torqueNm.toFixed(1)) });
                         }
 
-                        lastSpeedMS = currentSpeedMS; lastSpeedTime = now;
-                    }
-
-                    // DETECTION LIGNE ARRIVEE PISTE
-                    if (virtualGateCoords) {
-                        let distanceToGate = Math.sqrt(Math.pow(lat - virtualGateCoords.lat, 2) + Math.pow(lon - virtualGateCoords.lon, 2));
-                        if (distanceToGate < 0.00015) {
-                            let lapTime = Date.now() - lapStartTime;
-                            lapStartTime = Date.now();
-                            sessionLaps.push(lapTime);
-                            document.getElementById('race-lastlap').innerText = formatTime(lapTime);
-                            if (lapTime < bestLapTime) {
-                                bestLapTime = lapTime;
-                                document.getElementById('race-bestlap').innerText = formatTime(bestLapTime);
+                        // Détection passage de ligne (Intersection de deux segments)
+                        if (virtualGateLine && lastLat !== null) {
+                            if (checkLineIntersection(lastLat, lastLon, lat, lon, virtualGateLine.p1.lat, virtualGateLine.p1.lon, virtualGateLine.p2.lat, virtualGateLine.p2.lon)) {
+                                let lapTime = Date.now() - lapStartTime;
+                                lapStartTime = Date.now();
+                                sessionLaps.push(lapTime);
+                                document.getElementById('race-lastlap').innerText = formatTime(lapTime);
+                                if (lapTime < bestLapTime) {
+                                    bestLapTime = lapTime;
+                                    document.getElementById('race-bestlap').innerText = formatTime(bestLapTime);
+                                }
                             }
                         }
+
+                        lastSpeedMS = currentSpeedMS; lastSpeedTime = now;
                     }
+                    lastLat = lat; lastLon = lon;
                 }, () => {}, { enableHighAccuracy: true, maximumAge: 0 });
             }
         }
 
+        // Créer une ligne perpendiculaire de 7 mètres de chaque côté (Total 14m)
         function triggerVirtualGate() {
             if (lastLat !== null) {
-                virtualGateCoords = { lat: lastLat, lon: lastLon };
-                document.getElementById('gate-btn-text').innerText = "🔒 TIMING ACTIF";
-                document.getElementById('gate-btn-text').style.color = "var(--neon-green)";
-                lapStartTime = Date.now();
-                sessionLaps = [];
-                if(chronoInterval) clearInterval(chronoInterval);
-                chronoInterval = setInterval(() => {
-                    document.getElementById('race-timer').innerText = formatTime(Date.now() - lapStartTime);
-                }, 30);
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    let lat = pos.coords.latitude;
+                    let lon = pos.coords.longitude;
+                    let heading = pos.coords.heading; 
+                    
+                    if (heading === null || isNaN(heading)) heading = 90; // Axe par défaut s'il n'y a pas de mouvement
+
+                    let anglePerp = (heading + 90) * Math.PI / 180; // Angle perpendiculaire en radians
+
+                    // 1 mètre en latitude ~ 1 / 111139
+                    // 1 mètre en longitude ~ 1 / (111139 * cos(lat))
+                    let latOffset = (7 * Math.cos(anglePerp)) / 111139;
+                    let lonOffset = (7 * Math.sin(anglePerp)) / (111139 * Math.cos(lat * Math.PI / 180));
+
+                    virtualGateLine = {
+                        p1: { lat: lat + latOffset, lon: lon + lonOffset }, // Côté droit
+                        p2: { lat: lat - latOffset, lon: lon - lonOffset }  // Côté gauche
+                    };
+
+                    document.getElementById('gate-btn-text').innerText = "🔒 LIGNE 14M APPLIQUÉE";
+                    document.getElementById('gate-btn-text').style.color = "var(--neon-green)";
+                    lapStartTime = Date.now();
+                    sessionLaps = [];
+                    if(chronoInterval) clearInterval(chronoInterval);
+                    chronoInterval = setInterval(() => {
+                        document.getElementById('race-timer').innerText = formatTime(Date.now() - lapStartTime);
+                    }, 30);
+                }, null, { enableHighAccuracy: true });
             }
         }
 
-        // --- GESTION FIN DE SESSION PISTE ---
+        // Algorithme d'intersection mathématique de segments
+        function checkLineIntersection(a1_lat, a1_lon, a2_lat, a2_lon, b1_lat, b1_lon, b2_lat, b2_lon) {
+            let det = (a2_lat - a1_lat) * (b2_lon - b1_lon) - (b2_lat - b1_lat) * (a2_lon - a1_lon);
+            if (det === 0) return false; // Parallèles
+            let lambda = ((a2_lon - a1_lon) * (b1_lat - a1_lat) - (a2_lat - a1_lat) * (b1_lon - a1_lon)) / det;
+            let gamma = ((b2_lon - b1_lon) * (b1_lat - a1_lat) - (b2_lat - b1_lat) * (b1_lon - a1_lon)) / det;
+            return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
+        }
+
+        // --- ACCÈS AUX SESSIONS PISTE ---
         function stopRaceSession() {
             if(chronoInterval) clearInterval(chronoInterval);
             let elapsed = Date.now() - sessionStartTime;
-            document.getElementById('race-total-duration').innerText = `Temps de piste total : ${Math.floor(elapsed/60000)} min`;
+            document.getElementById('race-total-duration').innerText = `Temps total : ${Math.floor(elapsed/60000)} min`;
             
             let html = "";
             if (sessionLaps.length === 0) {
-                html = "<div class='data-row'>Aucun tour mémorisé. Repassez sur la ligne.</div>";
+                html = "<div class='data-row'>Aucun tour mémorisé. Coupez la ligne virtuelle.</div>";
             } else {
                 sessionLaps.forEach((time, index) => {
                     let isBest = time === bestLapTime;
@@ -434,119 +506,25 @@
         }
 
         function downloadRaceCSV() {
-            let filename = prompt("Nommez le fichier de votre session :", `Session_Piste_${new Date().toLocaleDateString().replace(/\//g,'-')}`);
+            let filename = prompt("Nommez votre session :", `Session_Piste_${new Date().toLocaleDateString().replace(/\//g,'-')}`);
             if(!filename) return;
 
             let csvContent = "data:text/csv;charset=utf-8,Tour,Temps (ms),Formate\n";
-            sessionLaps.forEach((time, index) => {
-                csvContent += `${index + 1},${time},${formatTime(time)}\n`;
-            });
+            sessionLaps.forEach((time, index) => { csvContent += `${index + 1},${time},${formatTime(time)}\n`; });
 
             let encodedUri = encodeURI(csvContent);
             let link = document.createElement("a");
             link.setAttribute("href", encodedUri);
             link.setAttribute("download", `${filename}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- GESTION ENREGISTREMENT BANC DE PUISSANCE ---
+        // --- STOCKAGE & ANALYSE DU BANC DE PUISSANCE ---
         function toggleDynoRecord() {
             let btn = document.getElementById('dyno-trigger-btn');
             if (!isDynoRecording) {
                 isDynoRecording = true;
                 currentRunData = [];
-                btn.innerText = "🛑 FIN DU TIR (SAUVER)";
+                btn.innerText = "🛑 SAUVEGARDER LE TIR";
                 btn.classList.add('recording');
-            } else {
-                isDynoRecording = false;
-                btn.innerText = "🏁 DEBUT DU TIR";
-                btn.classList.remove('recording');
-                
-                if(currentRunData.length > 5) {
-                    savedDynoRuns.push({ id: savedDynoRuns.length + 1, timestamp: new Date().toLocaleTimeString(), data: currentRunData });
-                    openDynoHistory();
-                    showRunChart(savedDynoRuns.length - 1);
-                } else {
-                    alert("Tir trop court. Accélérez sur une plus longue distance pour enregistrer des données.");
-                }
             }
-        }
-
-        function openDynoHistory() {
-            let html = "";
-            if(savedDynoRuns.length === 0) {
-                html = "<div style='font-size:0.75rem; color:var(--text-muted);'>Aucun tir enregistré pour le moment.</div>";
-            } else {
-                savedDynoRuns.forEach((run, index) => {
-                    html += `<div class="data-row" style="cursor:pointer; background:rgba(255,255,255,0.02); margin-bottom:3px; padding:6px;" onclick="showRunChart(${index})">
-                        <span>📊 Tir #${run.id}</span><span style="font-size:0.65rem; color:var(--neon-orange);">${run.timestamp}</span>
-                    </div>`;
-                });
-            }
-            document.getElementById('dyno-runs-list').innerHTML = html;
-            document.getElementById('modal-dyno-report').style.display = 'flex';
-            if(savedDynoRuns.length > 0 && !dynoChartInstance) showRunChart(savedDynoRuns.length - 1);
-        }
-
-        function showRunChart(index) {
-            let run = savedDynoRuns[index];
-            // Trier les données par RPM croissants pour éviter les zigzags sur la courbe
-            let sortedData = run.data.sort((a,b) => a.rpm - b.rpm);
-            
-            // Échantillonner pour lisser le rendu par tranches de 500 RPM
-            let pointsByRpm = {};
-            sortedData.forEach(pt => {
-                let bucket = Math.round(pt.rpm / 400) * 400; // Regrouper par pas de 400 RPM
-                if(!pointsByRpm[bucket]) pointsByRpm[bucket] = { hp: [], torque: [] };
-                pointsByRpm[bucket].hp.push(pt.hp);
-                pointsByRpm[bucket].torque.push(pt.torque);
-            });
-
-            let labels = Object.keys(pointsByRpm).map(Number).sort((a,b)=>a-b);
-            let hpData = labels.map(r => pointsByRpm[r].hp.reduce((a,b)=>a+b,0) / pointsByRpm[r].hp.length);
-            let torqueData = labels.map(r => pointsByRpm[r].torque.reduce((a,b)=>a+b,0) / pointsByRpm[r].torque.length);
-
-            let ctx = document.getElementById('dynoChart').getContext('2d');
-            if(dynoChartInstance) dynoChartInstance.destroy();
-
-            dynoChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Puissance (ch)', data: hpData, borderColor: '#ffaa00', backgroundColor: 'rgba(255,170,0,0.1)', yAxisID: 'y', tension: 0.3, borderWidth: 3 },
-                        { label: 'Couple (Nm)', data: torqueData, borderColor: '#ff4500', backgroundColor: 'rgba(255,69,0,0.1)', yAxisID: 'y1', tension: 0.3, borderWidth: 3 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'Régime Moteur (RPM)', color: '#6c757d', font: { size: 9 } }, ticks: { color: '#6c757d', font: { size: 9 } } },
-                        y: { position: 'left', grid: { color: 'rgba(255,255,255,0.05)' }, title: { display: true, text: 'Puissance (ch)', color: '#ffaa00', font: { size: 9 } }, ticks: { color: '#ffaa00', font: { size: 9 } } },
-                        y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Couple (Nm)', color: '#ff4500', font: { size: 9 } }, ticks: { color: '#ff4500', font: { size: 9 } } }
-                    },
-                    plugins: { legend: { labels: { color: '#fff', font: { size: 9 } } } }
-                }
-            });
-        }
-
-        function switchMode(modeName) {
-            document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(`tab-${modeName}`).classList.add('active');
-            document.getElementById(`screen-${modeName}`).classList.add('active');
-        }
-
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function formatTime(ms) {
-            let min = Math.floor(ms / 60000).toString().padStart(2, '0');
-            let sec = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
-            let msec = Math.floor((ms % 1000) / 10).toString().padStart(2, '0');
-            return `${min}:${sec}.${msec}`;
-        }
-    </script>
-</body>
-</html>
