@@ -13,7 +13,7 @@
             min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden;
         }
 
-        /* BARRE DE STATUT SUPÉRIEURE ÉPURÉE */
+        /* 2. BARRE SUPÉRIEURE ÉPURÉE SUR MESURE */
         .top-status-bar {
             background: #111420; padding: 10px 20px; display: flex; justify-content: space-between;
             align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.8rem; font-weight: 600;
@@ -36,9 +36,7 @@
         label { display: block; font-size: 0.65rem; color: #8e94a6; text-transform: uppercase; margin-bottom: 4px; font-weight: 600; }
         select, input { width: 100%; background: #07090e; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; padding: 10px; font-size: 0.9rem; }
 
-        /* BOUTONS ACTIONS */
         .btn { width: 100%; background: #fff; color: #000; border: none; padding: 14px; border-radius: 8px; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; cursor: pointer; }
-        .btn-abort { background: #ff3b30 !important; color: #fff !important; margin-top: 5px; }
         .btn-track { background: #34c759 !important; color: #fff !important; }
 
         /* COCKPIT DE TELEMETRIE DYNAMIQUE */
@@ -47,17 +45,18 @@
         .val-large { font-size: 2.4rem; font-weight: 800; font-family: monospace; color: #fff; line-height: 1; }
         .val-lbl { font-size: 0.6rem; color: #8e94a6; text-transform: uppercase; margin-top: 4px; font-weight: bold; }
         
-        /* Affichage des valeurs max en plus petit dans la même case */
-        .val-max-badge { font-size: 0.75rem; color: #ff3b30; font-weight: 700; margin-top: 3px; font-family: monospace; }
+        /* 3. DESIGN DES VALEURS MAX DANS LA MÊME CASE */
+        .val-max-badge { font-size: 0.75rem; color: #ff3b30; font-weight: 700; margin-top: 5px; font-family: monospace; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 3px; }
 
         /* CHRONO ET ODOMETRE */
         .chrono-box { font-size: 2.8rem; font-weight: 900; text-align: center; font-family: monospace; color: #00f3ff; margin: 10px 0; }
+        
+        /* 4. DESIGN ODOMÈTRE DOUBLE */
         .odometer-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center; margin-top: 5px; }
         .odo-val { font-size: 1.1rem; font-weight: 700; color: #fff; }
 
-        /* GRAPH */
+        /* GRAPH ET HISTORIQUE */
         .chart-frame { width: 100%; height: 260px; margin-top: 10px; background: #07090e; padding: 5px; border-radius: 8px; }
-
         .history-box { max-height: 130px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
         .history-row { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; font-size: 0.75rem; align-items: center; }
 
@@ -72,8 +71,9 @@
 </head>
 <body>
 
+    <!-- 2. BARRE SUPÉRIEURE ÉPURÉE SANS ANTIVEILLE NI BATTERIE AVEC TEMPÉRATURE -->
     <div class="top-status-bar">
-        <div class="status-gps" id="gps-status-indicator">🔴 SANS SIGNAL GPS</div>
+        <div class="status-gps" id="gps-status-indicator">🔴 RECHERCHE SIGNAL GPS...</div>
         <div class="status-temp" id="temp-indicator">Temp. Ext: --°C</div>
     </div>
 
@@ -83,6 +83,7 @@
         <button class="tab-btn" id="tab2" onclick="switchView(2)">📊 Dyno</button>
     </nav>
 
+    <!-- ÉCRAN 1 : CONFIGURATION TECHNIQUE KART -->
     <div class="app-view active" id="view0">
         <div class="panel">
             <div class="panel-title">Paramètres de Calcul Télémétrie</div>
@@ -102,12 +103,15 @@
         <button class="btn" onclick="switchView(1)">Accéder aux Écrans de Roulage ➔</button>
     </div>
 
+    <!-- ÉCRAN 2 : MODE PISTE / CHRONO -->
     <div class="app-view" id="view1">
         <div class="cockpit-grid">
+            <!-- 3. INTÉGRATION DE TR/MIN MAX DANS LA CASE INSTANTANÉE -->
             <div class="cockpit-card">
                 <div class="val-large" id="track-rpm">0</div><div class="val-lbl">Tr/min</div>
                 <div class="val-max-badge" id="track-rpm-max">Max: 0</div>
             </div>
+            <!-- 3. INTÉGRATION DE VITESSE MAX DANS LA CASE INSTANTANÉE -->
             <div class="cockpit-card">
                 <div class="val-large" id="track-speed">0.0</div><div class="val-lbl">Km/h</div>
                 <div class="val-max-badge" id="track-speed-max">Max: 0.0</div>
@@ -115,25 +119,29 @@
         </div>
 
         <div class="panel" style="text-align: center;">
+            <!-- 1. CHRONOMÉTRAGE PAR LIGNE VIRTUELLE PERPENDICULAIRE DE 14M -->
             <div class="panel-title">Chronométrage par Ligne Virtuelle (14m)</div>
             <div class="chrono-box" id="chrono-display">00:00.00</div>
             
+            <!-- 4. ODOMÈTRE COMPLET DISTANCE + TEMPS -->
             <div class="odometer-row">
                 <div>
-                    <div class="val-lbl">Distance</div>
+                    <div class="val-lbl">Distance de Roulage</div>
                     <div class="odo-val" id="odo-dist">0 m</div>
                 </div>
                 <div>
-                    <div class="val-lbl">Temps Roulage</div>
+                    <div class="val-lbl">Temps de Roulage</div>
                     <div class="odo-val" id="odo-time">00:00</div>
                 </div>
             </div>
         </div>
 
-        <button class="btn btn-track" onclick="setPerpendicularStartLine()">📍 Définir la Ligne de Départ (7m Gauche/Droite)</button>
+        <!-- 1. ACTION LIGNE DE DÉPART PERPENDICULAIRE -->
+        <button class="btn btn-track" onclick="setPerpendicularStartLine()">📍 Ligne de Départ (7m Gauche/Droite)</button>
         <div style="font-size: 0.65rem; color:#8e94a6; text-align:center; margin-top:-5px;" id="line-status">Aucune ligne de départ enregistrée.</div>
     </div>
 
+    <!-- ÉCRAN 3 : BANC ACCÉLÉRATION DYNO (AVEC OPTION SAUVEGARDE EXTÉRIEURE) -->
     <div class="app-view" id="view2">
         <div class="cockpit-grid">
             <div class="cockpit-card"><div class="val-large" id="dyno-hp" style="color: #00f3ff;">--</div><div class="val-lbl">Puissance (ch)</div></div>
@@ -141,40 +149,41 @@
         </div>
 
         <div class="panel">
-            <div class="panel-title">Graphique de Puissance de l'Essai</div>
+            <div class="panel-title">Graphique de Puissance du Tir</div>
             <div class="chart-frame"><canvas id="dynoChart"></canvas></div>
         </div>
 
+        <!-- 5. BOUTON POUR ENREGISTRER LE TIR ACTUEL -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
             <button class="btn" id="btn-dyno-trigger" onclick="toggleDynoRun()" style="background:#00f3ff; color:#000;">Démarrer Mesure</button>
-            <button class="btn" id="btn-dyno-save" onclick="saveCurrentDynoRun()" style="background:#34c759; color:#fff; display:none;">💾 Enregistrer Tir</button>
+            <button class="btn" id="btn-dyno-save" onclick="saveCurrentDynoRun()" style="background:#34c759; color:#fff; display:none;">💾 Enregistrer le Tir</button>
         </div>
 
+        <!-- 5. BLOCK DE L'HISTORIQUE DE SAUVEGARDE DES TIRS -->
         <div class="panel">
-            <div class="panel-title">Essais de Puissance Enregistrés</div>
+            <div class="panel-title">Historique des Tirs Sauvegardés</div>
             <div class="history-box" id="dyno-history-container"></div>
         </div>
     </div>
 
     <script>
-        // VARIABLES GLOBALES TÉLÉMÉTRIE ET PISTE
         let watchId = null;
         let lastPos = null;
+        
+        // Variables Odomètre
         let totalDistance = 0;
-        let startTimeRoulage = null;
         let totalRoulageSeconds = 0;
 
-        // Données instantanées et max
+        // Télémétrie Max
         let maxSpeed = 0;
         let maxRpm = 0;
 
-        // Variables Chrono Piste
-        let startLineGate = null; // Segment de 14m de large (7m de chaque côté)
-        let chronoInterval = null;
+        // 1. Logique Ligne Virtuelle Perpendiculaire 
+        let startLineGate = null; 
         let lapStartTime = null;
         let lastCrossTime = 0;
 
-        // Variables Tir Dyno
+        // 5. Variables Enregistrement Tir Dyno
         let isDynoRunning = false;
         let dynoSamples = [];
         let dynoChart = null;
@@ -185,9 +194,8 @@
             initDynoChartCanvas();
             renderSavedDynoRuns();
             startGlobalTelemetryAcquisition();
-            startTimeRoulage = Date.now();
             
-            // Odomètre de temps
+            // 4. Compteur Odomètre de Temps
             setInterval(() => {
                 totalRoulageSeconds++;
                 let m = Math.floor(totalRoulageSeconds / 60).toString().padStart(2, '0');
@@ -201,7 +209,7 @@
             document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
         }
 
-        // ACQUISITION DE LA TEMPÉRATURE RÉELLE ET GPS
+        // 2. RECUPERATION DE LA TEMPÉRATURE EXTERIEURE METEO REELLE PAR GPS
         function fetchExternalTemperature(lat, lon) {
             fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
                 .then(res => res.json())
@@ -224,97 +232,85 @@
         }
 
         function processIncomingGpsSample(pos) {
-            document.getElementById('gps-status-indicator').innerText = "🍏 SIGNAL GPS OK";
-            document.getElementById('gps-status-indicator').style.color = "#34c759";
-
+            document.getElementById('gps-status-indicator').innerText = "🍏 GPS CONNECTÉ";
+            
             let speedKmh = pos.coords.speed ? (pos.coords.speed * 3.6) : 0;
             if (speedKmh < 0) speedKmh = 0;
 
-            // Récupération dynamique de la température lors du premier fix précis
             if (!lastPos) { fetchExternalTemperature(pos.coords.latitude, pos.coords.longitude); }
 
-            // CALCUL DE L'ODOMÈTRE DE DISTANCE
+            // 4. CALCUL DE L'ODOMÈTRE DE DISTANCE (Haversine)
             if (lastPos) {
                 let dist = calculateDistanceBetweenPoints(lastPos.coords.latitude, lastPos.coords.longitude, pos.coords.latitude, pos.coords.longitude);
-                if (dist > 0.5 && dist < 100) { // Filtrage des sauts aberrants
+                if (dist > 0.5 && dist < 100) { 
                     totalDistance += dist;
                     document.getElementById('odo-dist').innerText = totalDistance > 1000 ? `${(totalDistance/1000).toFixed(2)} km` : `${Math.round(totalDistance)} m`;
                 }
             }
 
-            // DÉDUCTION DES TR/MIN
+            // CALCUL TR/MIN KART
             const circ = parseFloat(document.getElementById('cfg-tire').value);
             const ratio = parseFloat(document.getElementById('cfg-ratio').value);
             let speedMps = speedKmh / 3.6;
             let wheelRps = speedMps / circ;
             let rpm = Math.round(wheelRps * ratio * 60);
 
-            // GESTION DES VALEURS MAXIMALES DANS LA MÊME CASE
+            // 3. ACTUALISATION DES VALEURS MAX DANS LA MÊME ENCEINTE TACTILE
             if (speedKmh > maxSpeed) maxSpeed = speedKmh;
             if (rpm > maxRpm) maxRpm = rpm;
 
-            // Mise à jour de l'affichage
             document.getElementById('track-speed').innerText = speedKmh.toFixed(1);
             document.getElementById('track-speed-max').innerText = `Max: ${maxSpeed.toFixed(1)}`;
             document.getElementById('track-rpm').innerText = rpm;
             document.getElementById('track-rpm-max').innerText = `Max: ${maxRpm}`;
 
-            // VÉRIFICATION DU PASSAGE DE LA LIGNE DE DÉPART (GATE PERPENDICULAIRE DE 14M)
+            // 1. ANALYSE ET TRAVERSÉE DE LA BARRIÈRE VIRTUELLE DE 14M PERPENDICULAIRE
             if (startLineGate && lastPos) {
                 let crossed = checkGateIntersection(lastPos.coords, pos.coords, startLineGate);
-                if (crossed && (Date.now() - lastCrossTime > 8000)) { // Anti-rebond de 8 sec
+                if (crossed && (Date.now() - lastCrossTime > 8000)) { 
                     triggerLapSplit();
                 }
             }
 
-            // CAPTURE POUR LE TIR DYNO SI ACTIF
-            if (isDynoRunning && speedKmh > 5) {
+            if (isDynoRunning && speedKmh > 2) {
                 calculateAndLogDynoSample(rpm, speedKmh, pos.timestamp);
             }
 
             lastPos = pos;
         }
 
-        // CRÉATION DE LA LIGNE DE DÉPART PERPENDICULAIRE DE 7M DE CHAQUE CÔTÉ
+        // 1. CALCUL TRIGONOMÉTRIQUE DU VECTOR DE LA LIGNE DE DÉPART DE 7M GAUCHE ET DROITE
         function setPerpendicularStartLine() {
             if (!lastPos || lastPos.coords.heading === null || isNaN(lastPos.coords.heading)) {
-                alert("Impossible de générer la ligne : Déplacez-vous à plus de 5 km/h pour que le GPS fixe votre cap (direction).");
+                alert("Erreur Cap GPS : Roulez à plus de 5 km/h en ligne droite pour enregistrer le vecteur perpendiculaire.");
                 return;
             }
 
             let lat = lastPos.coords.latitude;
             let lon = lastPos.coords.longitude;
-            let headingDeg = lastPos.coords.heading; // Cap en degrés du kart à cet instant
+            let headingRad = (lastPos.coords.heading * Math.PI) / 180;
+            let perpRad = headingRad + (Math.PI / 2); // Angle à 90° perpendiculaire à la trajectoire
 
-            let headingRad = (headingDeg * Math.PI) / 180;
-            let perpRad = headingRad + (Math.PI / 2); // Angle perpendiculaire parfait
-
-            // Conversion approximative des 7 mètres en degrés de coordonnées terrestres
             const metersToDegreeLat = 1 / 111132;
             const metersToDegreeLon = 1 / (111412 * Math.cos(lat * Math.PI / 180));
 
+            // Calcul du décalage de 7 mètres de chaque côté
             let deltaLat = 7 * Math.sin(perpRad) * metersToDegreeLat;
             let deltaLon = 7 * Math.cos(perpRad) * metersToDegreeLon;
 
-            // Définition des deux extrémités de la ligne de départ (Segment AB de 14 mètres au total)
             startLineGate = {
-                ax: lon + deltaLon, ay: lat + deltaLat, // Point A (7m à gauche)
-                bx: lon - deltaLon, by: lat - deltaLat  // Point B (7m à droite)
+                ax: lon + deltaLon, ay: lat + deltaLat, // Point Extrême Gauche (7 mètres)
+                bx: lon - deltaLon, by: lat - deltaLat  // Point Extrême Droite (7 mètres)
             };
 
-            document.getElementById('line-status').innerText = `Ligne perpendiculaire de 14m enregistrée à ${new Date().toLocaleTimeString()}`;
+            document.getElementById('line-status').innerText = `Ligne de 14m générée à ${new Date().toLocaleTimeString()}`;
             document.getElementById('line-status').style.color = "#34c759";
         }
 
-        // ALGORITHME D'INTERSECTION DE SEGMENTS (DÉTECTION DE TRAVERSÉE DE LIGNE)
         function checkGateIntersection(p1, p2, gate) {
-            function ccw(A, B, C) {
-                return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
-            }
-            let A = { x: gate.ax, y: gate.ay };
-            let B = { x: gate.bx, y: gate.by };
-            let C = { x: p1.longitude, y: p1.latitude };
-            let D = { x: p2.longitude, y: p2.latitude };
+            function ccw(A, B, C) { return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x); }
+            let A = { x: gate.ax, y: gate.ay }, B = { x: gate.bx, y: gate.by };
+            let C = { x: p1.longitude, y: p1.latitude }, D = { x: p2.longitude, y: p2.latitude };
             return ccw(A, C, D) !== ccw(B, C, D) && ccw(A, B, C) !== ccw(A, B, D);
         }
 
@@ -328,13 +324,9 @@
                 document.getElementById('chrono-display').innerText = `${m}:${s}.${ms}`;
             }
             lapStartTime = Date.now();
-            
-            // Animation flash visuelle sur le chrono à chaque tour
-            document.getElementById('chrono-display').style.color = "#34c759";
-            setTimeout(() => { document.getElementById('chrono-display').style.color = "#00f3ff"; }, 1000);
         }
 
-        // MODULE D'ANALYSE DYNAMIQUE (DYNO)
+        // ACCÉLÉRATION ET ANALYSE DYNOMANAGER
         function toggleDynoRun() {
             const btn = document.getElementById('btn-dyno-trigger');
             const saveBtn = document.getElementById('btn-dyno-save');
@@ -343,16 +335,14 @@
                 isDynoRunning = true;
                 dynoSamples = [];
                 currentMaxHp = 0; currentMaxNm = 0;
-                btn.innerText = "🛑 Arrêter Tir";
-                btn.style.background = "#ff3b30";
-                btn.style.color = "#fff";
+                btn.innerText = "🛑 STOP MESURE";
+                btn.style.background = "#ff3b30"; btn.style.color = "#fff";
                 saveBtn.style.display = "none";
             } else {
                 isDynoRunning = false;
                 btn.innerText = "Démarrer Mesure";
-                btn.style.background = "#00f3ff";
-                btn.style.color = "#000";
-                if(dynoSamples.length > 2) { saveBtn.style.display = "block"; }
+                btn.style.background = "#00f3ff"; btn.style.color = "#000";
+                if(dynoSamples.length > 3) { saveBtn.style.display = "block"; }
             }
         }
 
@@ -361,22 +351,18 @@
                 dynoSamples.push({ rpm: rpm, speed: speedKmh, time: timestamp, hp: 0, nm: 0 });
                 return;
             }
-
             let prev = dynoSamples[dynoSamples.length - 1];
             let dt = (timestamp - prev.time) / 1000;
             if (dt <= 0) return;
 
-            let dv = (speedKmh - prev.speed) / 3.6; // Delta vitesse en m/s
-            let acceleration = dv / dt; // m/s²
-
+            let dv = (speedKmh - prev.speed) / 3.6;
+            let acceleration = dv / dt;
             if (acceleration < 0) acceleration = 0;
 
             const mass = parseFloat(document.getElementById('cfg-weight').value);
-            
-            // Formule physique simplifiée : Puissance = Force * Vitesse
             let forceInertie = mass * acceleration;
             let powerWatts = forceInertie * (speedKmh / 3.6);
-            let hp = Math.round((powerWatts / 735.5) * 1.15); // Correction transmission incluse
+            let hp = Math.round((powerWatts / 735.5) * 1.15);
             let nm = rpm > 500 ? Math.round((hp * 7023.5) / rpm) : 0;
 
             if(hp > currentMaxHp) currentMaxHp = hp;
@@ -389,9 +375,9 @@
             updateDynoChartCurves();
         }
 
-        // ENREGISTREMENT DES DONNÉES D'ESSAIS DANS L'HISTORIQUE
+        // 5. LOGIQUE DE SAUVEGARDE ET EXPLOITATION DE L'HISTORIQUE DE TIRS
         function saveCurrentDynoRun() {
-            if (dynoSamples.length < 5) return;
+            if (dynoSamples.length < 4) return;
 
             let runReport = {
                 id: Date.now(),
@@ -408,22 +394,19 @@
 
             renderSavedDynoRuns();
             document.getElementById('btn-dyno-save').style.display = "none";
-            alert("Tir de puissance enregistré avec succès !");
         }
 
         function renderSavedDynoRuns() {
             const container = document.getElementById('dyno-history-container');
             const runs = JSON.parse(localStorage.getItem('sst_kart_dyno_runs')) || [];
-            
             if(runs.length === 0) {
-                container.innerHTML = `<div style="font-size:0.7rem; color:#5c6275; text-align:center; padding:10px;">Aucun tir enregistré.</div>`;
+                container.innerHTML = `<div style="font-size:0.7rem; color:#5c6275; text-align:center; padding:10px;">Aucun tir enregistré dans la mémoire.</div>`;
                 return;
             }
-
             container.innerHTML = runs.map(r => `
                 <div class="history-row" onclick="loadArchivedDynoRun(${r.id})">
-                    <div><strong>Tir ${r.date}</strong></div>
-                    <div><span style="color:#00f3ff; font-weight:bold;">${r.maxHp} ch</span> / <span style="color:#ff3b30; font-weight:bold;">${r.maxNm} Nm</span> / <span style="color:#fff;">${r.maxKmh.toFixed(1)} km/h</span></div>
+                    <div><strong>Essai ${r.date}</strong></div>
+                    <div><span style="color:#00f3ff; font-weight:bold;">${r.maxHp}ch</span> / <span style="color:#ff3b30; font-weight:bold;">${r.maxNm}Nm</span> / <span style="color:#fff;">${r.maxKmh.toFixed(1)} km/h</span></div>
                 </div>
             `).join('');
         }
@@ -434,14 +417,11 @@
             if(targeted) {
                 document.getElementById('dyno-hp').innerText = targeted.maxHp;
                 document.getElementById('dyno-nm').innerText = targeted.maxNm;
-                
-                // Recharger les courbes sur le graphique
                 dynoSamples = targeted.samples;
                 updateDynoChartCurves();
             }
         }
 
-        // ARCHITECTURE DES GRAPHIQUES CHART.JS
         function initDynoChartCanvas() {
             const ctx = document.getElementById('dynoChart').getContext('2d');
             dynoChart = new Chart(ctx, {
@@ -460,28 +440,20 @@
         }
 
         function updateDynoChartCurves() {
-            let rpms = dynoSamples.map(s => s.rpm);
-            let hps = dynoSamples.map(s => s.hp);
-            let nms = dynoSamples.map(s => s.nm);
-
-            dynoChart.data.labels = rpms;
+            dynoChart.data.labels = dynoSamples.map(s => s.rpm);
             dynoChart.data.datasets = [
-                { data: hps, borderColor: '#00f3ff', yAxisID: 'y', borderWidth: 3, pointRadius: 0, tension: 0.2 },
-                { data: nms, borderColor: '#ff3b30', yAxisID: 'y1', borderWidth: 3, pointRadius: 0, tension: 0.2 }
+                { data: dynoSamples.map(s => s.hp), borderColor: '#00f3ff', yAxisID: 'y', borderWidth: 3, pointRadius: 0, tension: 0.2 },
+                { data: dynoSamples.map(s => s.nm), borderColor: '#ff3b30', yAxisID: 'y1', borderWidth: 3, pointRadius: 0, tension: 0.2 }
             ];
             dynoChart.update();
         }
 
-        // FORMULE MATHÉMATIQUE DE DISTANCE (HAVERSINE)
         function calculateDistanceBetweenPoints(lat1, lon1, lat2, lon2) {
-            const R = 6371000; // Rayon de la terre en mètres
+            const R = 6371000;
             let dLat = (lat2 - lat1) * Math.PI / 180;
             let dLon = (lon2 - lon1) * Math.PI / 180;
-            let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
+            let a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
         }
     </script>
 </body>
