@@ -291,11 +291,11 @@
         let lastLat = null; let lastLon = null; let moteurRpm = 0;
 
         // DATA SESSIONS PISTE
-        let virtualGateLine = null; // Contiendra {p1: {x, y}, p2: {x, y}} en coordonnées locales approximées
+        let virtualGateLine = null; 
         let lapStartTime = 0; let bestLapTime = Infinity;
         let chronoInterval = null; let sessionLaps = []; let sessionStartTime = 0;
 
-        // DATA BANC DE PUISSANCE (Persistant)
+        // DATA BANC DE PUISSANCE
         let isDynoRecording = false;
         let currentRunData = []; 
         let savedDynoRuns = JSON.parse(localStorage.getItem('saved_dyno_runs')) || [];
@@ -318,7 +318,6 @@
             } else { initAll(); }
         }
 
-        // Météo API
         function fetchWeather(lat, lon) {
             fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`)
                 .then(res => res.json())
@@ -340,7 +339,6 @@
             setInterval(() => {
                 document.getElementById('top-clock').innerText = new Date().toTimeString().split(' ')[0];
                 
-                // Odomètre - Temps de fonctionnement cumulé
                 let elapsedMs = Date.now() - sessionStartTime;
                 let hrs = Math.floor(elapsedMs / 3600000).toString().padStart(2, '0');
                 let mins = Math.floor((elapsedMs % 3600000) / 60000).toString().padStart(2, '0');
@@ -356,7 +354,6 @@
                     let speedKMH = position.coords.speed ? (position.coords.speed * 3.6) : 0;
                     currentSpeedMS = position.coords.speed || 0;
                     let accuracy = position.coords.accuracy ? Math.round(position.coords.accuracy) : 0;
-                    let heading = position.coords.heading; // Degrés par rapport au Nord (0-360)
 
                     document.getElementById('top-gps-precision').innerText = `GPS : ±${accuracy}m`;
                     document.getElementById('top-gps-precision').style.color = accuracy < 8 ? 'var(--neon-green)' : 'var(--neon-orange)';
@@ -366,19 +363,16 @@
                         weatherFetched = true;
                     }
 
-                    // Distance odomètre
                     if (lastLat !== null && lastLon !== null && currentSpeedMS > 0.5) {
                         let d = Math.sqrt(Math.pow(lat - lastLat, 2) + Math.pow(lon - lastLon, 2)) * 111139;
                         if (d < 50) totalDistanceMeters += d;
                     }
 
-                    // Calcul RPM moteur
                     let pneuCircumferenceMeters = (setup.pneuDiameter / 100) * Math.PI;
                     let ratioMecanique = setup.couronne / setup.pignon;
                     moteurRpm = Math.round(((currentSpeedMS * 60) / pneuCircumferenceMeters) * ratioMecanique);
                     if (moteurRpm < 0 || isNaN(moteurRpm)) moteurRpm = 0;
 
-                    // Mise à jour de l'affichage instantané et Max réduits
                     document.querySelectorAll('.uni-rpm').forEach(el => el.innerHTML = `${moteurRpm}<span class="unit">rpm</span>`);
                     document.getElementById('route-speed').innerHTML = `${Math.round(speedKMH)}<span class="unit">km/h</span>`;
                     document.getElementById('race-speed').innerText = Math.round(speedKMH);
@@ -396,7 +390,6 @@
 
                     document.getElementById('route-trip').innerHTML = `${(totalDistanceMeters / 1000).toFixed(2)}<span class="unit">km</span>`;
 
-                    // Calculs Banc (Puissance / Couple)
                     let now = Date.now();
                     let dt = (now - lastSpeedTime) / 1000;
                     if (dt > 0.2) {
@@ -422,7 +415,6 @@
                             currentRunData.push({ rpm: moteurRpm, hp: parseFloat(powerCH.toFixed(1)), torque: parseFloat(torqueNm.toFixed(1)) });
                         }
 
-                        // Détection passage de ligne (Intersection de deux segments)
                         if (virtualGateLine && lastLat !== null) {
                             if (checkLineIntersection(lastLat, lastLon, lat, lon, virtualGateLine.p1.lat, virtualGateLine.p1.lon, virtualGateLine.p2.lat, virtualGateLine.p2.lon)) {
                                 let lapTime = Date.now() - lapStartTime;
@@ -443,7 +435,6 @@
             }
         }
 
-        // Créer une ligne perpendiculaire de 7 mètres de chaque côté (Total 14m)
         function triggerVirtualGate() {
             if (lastLat !== null) {
                 navigator.geolocation.getCurrentPosition((pos) => {
@@ -451,18 +442,16 @@
                     let lon = pos.coords.longitude;
                     let heading = pos.coords.heading; 
                     
-                    if (heading === null || isNaN(heading)) heading = 90; // Axe par défaut s'il n'y a pas de mouvement
+                    if (heading === null || isNaN(heading)) heading = 90;
 
-                    let anglePerp = (heading + 90) * Math.PI / 180; // Angle perpendiculaire en radians
+                    let anglePerp = (heading + 90) * Math.PI / 180;
 
-                    // 1 mètre en latitude ~ 1 / 111139
-                    // 1 mètre en longitude ~ 1 / (111139 * cos(lat))
                     let latOffset = (7 * Math.cos(anglePerp)) / 111139;
                     let lonOffset = (7 * Math.sin(anglePerp)) / (111139 * Math.cos(lat * Math.PI / 180));
 
                     virtualGateLine = {
-                        p1: { lat: lat + latOffset, lon: lon + lonOffset }, // Côté droit
-                        p2: { lat: lat - latOffset, lon: lon - lonOffset }  // Côté gauche
+                        p1: { lat: lat + latOffset, lon: lon + lonOffset }, 
+                        p2: { lat: lat - latOffset, lon: lon - lonOffset }  
                     };
 
                     document.getElementById('gate-btn-text').innerText = "🔒 LIGNE 14M APPLIQUÉE";
@@ -477,16 +466,14 @@
             }
         }
 
-        // Algorithme d'intersection mathématique de segments
         function checkLineIntersection(a1_lat, a1_lon, a2_lat, a2_lon, b1_lat, b1_lon, b2_lat, b2_lon) {
             let det = (a2_lat - a1_lat) * (b2_lon - b1_lon) - (b2_lat - b1_lat) * (a2_lon - a1_lon);
-            if (det === 0) return false; // Parallèles
+            if (det === 0) return false; 
             let lambda = ((a2_lon - a1_lon) * (b1_lat - a1_lat) - (a2_lat - a1_lat) * (b1_lon - a1_lon)) / det;
-            let gamma = ((b2_lon - b1_lon) * (b1_lat - a1_lat) - (b2_lat - b1_lat) * (b1_lon - a1_lon)) / det;
+            let gamma = ((b2_lon - b1_lon) * (b1_lat - a1_lat) - (b2_lat - b1_lat) * (a1_lon - a1_lon)) / det;
             return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
         }
 
-        // --- ACCÈS AUX SESSIONS PISTE ---
         function stopRaceSession() {
             if(chronoInterval) clearInterval(chronoInterval);
             let elapsed = Date.now() - sessionStartTime;
@@ -519,7 +506,6 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // --- STOCKAGE & ANALYSE DU BANC DE PUISSANCE ---
         function toggleDynoRecord() {
             let btn = document.getElementById('dyno-trigger-btn');
             if (!isDynoRecording) {
@@ -527,4 +513,98 @@
                 currentRunData = [];
                 btn.innerText = "🛑 SAUVEGARDER LE TIR";
                 btn.classList.add('recording');
+            } else {
+                isDynoRecording = false;
+                btn.innerText = "🏁 DEBUT DU TIR";
+                btn.classList.remove('recording');
+                
+                if(currentRunData.length > 5) {
+                    savedDynoRuns.push({ id: Date.now(), title: `Tir #${savedDynoRuns.length + 1}`, timestamp: new Date().toLocaleTimeString(), data: currentRunData });
+                    localStorage.setItem('saved_dyno_runs', JSON.stringify(savedDynoRuns));
+                    openDynoHistory();
+                    showRunChart(savedDynoRuns.length - 1);
+                } else {
+                    alert("Tir trop court, pas assez de données.");
+                }
             }
+        }
+
+        function openDynoHistory() {
+            let html = "";
+            if(savedDynoRuns.length === 0) {
+                html = "<div style='font-size:0.75rem; color:var(--text-muted); padding:10px;'>Aucun tir mémorisé.</div>";
+            } else {
+                savedDynoRuns.forEach((run, index) => {
+                    html += `<div class="data-row" style="background:rgba(255,255,255,0.02); margin-bottom:4px; padding:4px 6px;">
+                        <span style="cursor:pointer; flex-grow:1;" onclick="showRunChart(${index})">📊 ${run.title} (${run.timestamp})</span>
+                        <button class="delete-btn" onclick="deleteRun(${index})">✕</button>
+                    </div>`;
+                });
+            }
+            document.getElementById('dyno-runs-list').innerHTML = html;
+            document.getElementById('modal-dyno-report').style.display = 'flex';
+            if(savedDynoRuns.length > 0 && !dynoChartInstance) showRunChart(savedDynoRuns.length - 1);
+        }
+
+        function deleteRun(index) {
+            if(confirm("Supprimer ce tir définitivement ?")) {
+                savedDynoRuns.splice(index, 1);
+                localStorage.setItem('saved_dyno_runs', JSON.stringify(savedDynoRuns));
+                openDynoHistory();
+            }
+        }
+
+        function switchMode(mode) {
+            document.querySelectorAll('.mode-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            
+            document.getElementById(`tab-${mode}`).classList.add('active');
+            document.getElementById(`screen-${mode}`).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function formatTime(ms) {
+            if (ms === Infinity || isNaN(ms)) return "--:--.--";
+            let min = Math.floor(ms / 60000).toString().padStart(2, '0');
+            let sec = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
+            let msec = Math.floor((ms % 1000) / 10).toString().padStart(2, '0');
+            return `${min}:${sec}.${msec}`;
+        }
+
+        function showRunChart(index) {
+            let run = savedDynoRuns[index];
+            if (!run) return;
+            
+            let labels = run.data.map(d => d.rpm);
+            let hpData = run.data.map(d => d.hp);
+            let torqueData = run.data.map(d => d.torque);
+
+            if (dynoChartInstance) dynoChartInstance.destroy();
+
+            let ctx = document.getElementById('dynoChart').getContext('2d');
+            dynoChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Puissance (ch)', data: hpData, borderColor: '#ffaa00', backgroundColor: 'transparent', yAxisID: 'y' },
+                        { label: 'Couple (Nm)', data: torqueData, borderColor: '#ff5500', backgroundColor: 'transparent', yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'RPM', color: '#fff' }, ticks: { color: '#6c757d' } },
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Puissance (ch)', color: '#ffaa00' } },
+                        y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Couple (Nm)', color: '#ff5500' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
